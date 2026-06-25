@@ -8,9 +8,10 @@
     "start:api": "node dist-server/index.js",
     "build": "tsc --noEmit && npm run build:api && vite build",
     "build:api": "tsc -p tsconfig.server.json",
-    "preview": "vite preview",
+    "preview": "npm run build && wrangler dev",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -91,6 +92,7 @@
     "tsx": "^4.22.4",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "wrangler": "^4.104.0"
   }
 }
