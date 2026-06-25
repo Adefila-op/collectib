@@ -10,6 +10,13 @@ export const Route = createFileRoute("/explore")({
 });
 
 const TABS = ["All", "USD", "USDC", "SOL"];
+const DISCOVERY_LINKS = [
+  { label: "Artists", to: "/artists" },
+  { label: "Auctions", to: "/auctions" },
+  { label: "Collections", to: "/collections" },
+  { label: "Events", to: "/events" },
+  { label: "Community", to: "/community" },
+] as const;
 
 function Explore() {
   const [tab, setTab] = useState("All");
@@ -55,6 +62,21 @@ function Explore() {
         />
       </div>
       <div className="flex gap-2 overflow-x-auto no-scrollbar px-5 mt-4 pb-2">
+        <Chip active>Artworks</Chip>
+        {DISCOVERY_LINKS.map((item) => (
+          <Link
+            key={item.label}
+            to={item.to}
+            className="relative shrink-0 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground"
+          >
+            {item.label}
+            <span className="ml-1.5 rounded-md bg-orange-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-orange-700">
+              new
+            </span>
+          </Link>
+        ))}
+      </div>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar px-5 mt-1 pb-2">
         {TABS.map((t) => (
           <Chip key={t} active={t === tab} onClick={() => setTab(t)}>
             {t}

@@ -8,6 +8,11 @@ import type { AuthedRequest } from "../types.js";
 
 const router = Router();
 
+type HeliusRpcResponse<T> = {
+  result?: T;
+  error?: unknown;
+};
+
 async function canReadWallet(address: string, profileId?: string) {
   if (!profileId) return false;
 
@@ -46,12 +51,16 @@ async function heliusRpc<T>(method: string, params: unknown) {
     }),
   });
 
-  const body = await response.json();
+  const body = (await response.json()) as HeliusRpcResponse<T>;
   if (!response.ok || body.error) {
     throw new Error(`Helius request failed: ${JSON.stringify(body.error ?? body)}`);
   }
 
-  return body.result as T;
+  if (!body.result) {
+    throw new Error("Helius request returned no result.");
+  }
+
+  return body.result;
 }
 
 router.get("/:address/overview", requireAuth, async (req: AuthedRequest, res, next) => {

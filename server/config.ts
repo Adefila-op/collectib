@@ -14,6 +14,7 @@ const appOrigins = Array.from(
     [
       ...configuredOrigins,
       vercelOrigin,
+      "https://collectib.muyeezadefila29.workers.dev",
       "https://collectibles-vite.vercel.app",
       "http://localhost:5173",
       "http://127.0.0.1:5173",

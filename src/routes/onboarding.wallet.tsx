@@ -6,6 +6,8 @@ import { createLoginNonce, saveSession, verifyWalletSignature } from "@/lib/api"
 import {
   connectSolanaWallet,
   getWalletInstallUrl,
+  getWalletAppUrl,
+  isMobileWalletEnvironment,
   shortWalletAddress,
   signLoginMessage,
   type SupportedWalletId,
@@ -31,6 +33,13 @@ const WALLETS: Array<{
     letter: "P",
   },
   { id: "solflare", name: "Solflare", desc: "Solana wallet", color: "#FC7A1E", letter: "S" },
+  {
+    id: "metamask",
+    name: "MetaMask",
+    desc: "Solana wallet only",
+    color: "#F6851B",
+    letter: "M",
+  },
 ];
 
 function Wallet() {
@@ -171,10 +180,18 @@ function Wallet() {
             {selectedWallet && (
               <SecondaryButton
                 onClick={() =>
-                  window.open(getWalletInstallUrl(selectedWallet.id), "_blank", "noopener")
+                  window.open(
+                    isMobileWalletEnvironment()
+                      ? getWalletAppUrl(selectedWallet.id)
+                      : getWalletInstallUrl(selectedWallet.id),
+                    "_blank",
+                    "noopener",
+                  )
                 }
               >
-                Install {selectedWallet.name}
+                {isMobileWalletEnvironment()
+                  ? `Open ${selectedWallet.name} app`
+                  : `Install ${selectedWallet.name}`}
               </SecondaryButton>
             )}
             <Link

@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { SecondaryButton } from "@/components/art-ui";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { loginWithEmail, saveSession, signUpWithEmail } from "@/lib/api";
 
@@ -119,16 +118,6 @@ function Auth() {
             {isSubmitting ? "Please wait..." : isLogin ? "Log in" : "Sign up"}
           </button>
         </form>
-
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground">or continue with</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
-        <SecondaryButton to="/onboarding/wallet">
-          {isLogin ? "Log in with wallet" : "Continue with wallet"}
-        </SecondaryButton>
 
         <p className="text-center mt-8 text-sm text-muted-foreground">
           {isLogin ? "Need an account?" : "Already have an account?"}{" "}

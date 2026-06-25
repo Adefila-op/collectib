@@ -1,4 +1,8 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+const configuredApiBaseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+const isBrowser = typeof window !== "undefined";
+const isLocalApiUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(configuredApiBaseUrl);
+const isLocalAppHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+const API_BASE_URL = isLocalApiUrl && isBrowser && !isLocalAppHost ? "" : configuredApiBaseUrl;
 const AUTH_TOKEN_KEY = "collectibles.authToken";
 const WALLET_ADDRESS_KEY = "collectibles.walletAddress";
 

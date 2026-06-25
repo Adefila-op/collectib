@@ -15,6 +15,15 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   base: "./",
+  server: {
+    host: "0.0.0.0",
+    proxy: {
+      "/api": {
+        target: "http://localhost:8787",
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     outDir: "dist",
     rollupOptions: {

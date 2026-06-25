@@ -23,6 +23,7 @@ import { Route as ShippingRouteImport } from './routes/shipping'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SellRouteImport } from './routes/sell'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
@@ -32,6 +33,7 @@ import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as InviteRouteImport } from './routes/invite'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as HoldingsRouteImport } from './routes/holdings'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FavoritesRouteImport } from './routes/favorites'
@@ -140,6 +142,11 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SavedRoute = SavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -183,6 +190,11 @@ const InboxRoute = InboxRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoldingsRoute = HoldingsRouteImport.update({
+  id: '/holdings',
+  path: '/holdings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -390,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/favorites': typeof FavoritesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
+  '/holdings': typeof HoldingsRoute
   '/home': typeof HomeRoute
   '/inbox': typeof InboxRoute
   '/invite': typeof InviteRoute
@@ -399,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/portfolio': typeof PortfolioRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/search': typeof SearchRouteWithChildren
   '/sell': typeof SellRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -452,6 +466,7 @@ export interface FileRoutesByTo {
   '/favorites': typeof FavoritesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
+  '/holdings': typeof HoldingsRoute
   '/home': typeof HomeRoute
   '/inbox': typeof InboxRoute
   '/invite': typeof InviteRoute
@@ -461,6 +476,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/search': typeof SearchRouteWithChildren
   '/sell': typeof SellRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -515,6 +531,7 @@ export interface FileRoutesById {
   '/favorites': typeof FavoritesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
+  '/holdings': typeof HoldingsRoute
   '/home': typeof HomeRoute
   '/inbox': typeof InboxRoute
   '/invite': typeof InviteRoute
@@ -524,6 +541,7 @@ export interface FileRoutesById {
   '/portfolio': typeof PortfolioRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/search': typeof SearchRouteWithChildren
   '/sell': typeof SellRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -579,6 +597,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/forgot-password'
     | '/help'
+    | '/holdings'
     | '/home'
     | '/inbox'
     | '/invite'
@@ -588,6 +607,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/privacy'
     | '/profile'
+    | '/saved'
     | '/search'
     | '/sell'
     | '/settings'
@@ -641,6 +661,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/forgot-password'
     | '/help'
+    | '/holdings'
     | '/home'
     | '/inbox'
     | '/invite'
@@ -650,6 +671,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/privacy'
     | '/profile'
+    | '/saved'
     | '/search'
     | '/sell'
     | '/settings'
@@ -703,6 +725,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/forgot-password'
     | '/help'
+    | '/holdings'
     | '/home'
     | '/inbox'
     | '/invite'
@@ -712,6 +735,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/privacy'
     | '/profile'
+    | '/saved'
     | '/search'
     | '/sell'
     | '/settings'
@@ -766,6 +790,7 @@ export interface RootRouteChildren {
   FavoritesRoute: typeof FavoritesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HelpRoute: typeof HelpRoute
+  HoldingsRoute: typeof HoldingsRoute
   HomeRoute: typeof HomeRoute
   InboxRoute: typeof InboxRoute
   InviteRoute: typeof InviteRoute
@@ -775,6 +800,7 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
+  SavedRoute: typeof SavedRoute
   SearchRoute: typeof SearchRouteWithChildren
   SellRoute: typeof SellRouteWithChildren
   SettingsRoute: typeof SettingsRoute
@@ -904,6 +930,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/saved': {
+      id: '/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof SavedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -965,6 +998,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/holdings': {
+      id: '/holdings'
+      path: '/holdings'
+      fullPath: '/holdings'
+      preLoaderRoute: typeof HoldingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -1307,6 +1347,7 @@ const rootRouteChildren: RootRouteChildren = {
   FavoritesRoute: FavoritesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HelpRoute: HelpRoute,
+  HoldingsRoute: HoldingsRoute,
   HomeRoute: HomeRoute,
   InboxRoute: InboxRoute,
   InviteRoute: InviteRoute,
@@ -1316,6 +1357,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
+  SavedRoute: SavedRoute,
   SearchRoute: SearchRouteWithChildren,
   SellRoute: SellRouteWithChildren,
   SettingsRoute: SettingsRoute,

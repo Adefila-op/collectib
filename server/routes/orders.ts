@@ -37,6 +37,13 @@ type CryptoOrderRow = {
   payment_provider: string;
 };
 
+type FlutterwavePaymentResponse = {
+  status?: string;
+  data?: {
+    link?: string;
+  } & Record<string, unknown>;
+};
+
 router.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const profileId = req.user?.sub;
@@ -165,7 +172,7 @@ router.post("/:id/flutterwave", requireAuth, async (req: AuthedRequest, res, nex
         },
       }),
     });
-    const body = await response.json();
+    const body = (await response.json()) as FlutterwavePaymentResponse;
     if (!response.ok || body.status !== "success") {
       return res.status(502).json({ error: "Flutterwave checkout failed.", details: body });
     }

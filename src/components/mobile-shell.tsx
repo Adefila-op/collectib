@@ -1,5 +1,5 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Bell } from "lucide-react";
+import { Activity, ArrowLeft, Bell, Briefcase, Compass, Home, User } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function MobileShell({
@@ -70,12 +70,11 @@ export function TopBar({
   );
 }
 
-import { Home, Compass, Briefcase, User } from "lucide-react";
-
 export function BottomNav() {
   const items = [
     { to: "/home", label: "Home", icon: Home },
     { to: "/explore", label: "Explore", icon: Compass },
+    { to: "/activity", label: "Activity", icon: Activity, isNew: true },
     { to: "/portfolio", label: "Portfolio", icon: Briefcase },
     { to: "/profile", label: "Profile", icon: User },
   ];
@@ -86,9 +85,12 @@ export function BottomNav() {
           <Link
             key={it.to}
             to={it.to}
-            className="flex flex-col items-center gap-1 py-1 px-3 text-muted-foreground [&.active]:text-primary"
+            className="relative flex flex-col items-center gap-1 py-1 px-2 text-muted-foreground [&.active]:text-primary"
             activeOptions={{ exact: false }}
           >
+            {it.isNew && (
+              <span className="absolute right-4 top-0 h-1.5 w-1.5 rounded-full bg-orange-700" />
+            )}
             <it.icon size={20} />
             <span className="text-[10px] font-medium">{it.label}</span>
           </Link>
