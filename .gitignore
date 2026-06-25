@@ -37,3 +37,5 @@ wallet-success-check.png
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
