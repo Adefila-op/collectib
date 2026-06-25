@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:8787").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 const AUTH_TOKEN_KEY = "collectibles.authToken";
 const WALLET_ADDRESS_KEY = "collectibles.walletAddress";
 

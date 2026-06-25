@@ -7,8 +7,18 @@ const configuredOrigins = (process.env.APP_ORIGIN ?? "http://localhost:5173")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
+
 const appOrigins = Array.from(
-  new Set([...configuredOrigins, "http://localhost:5173", "http://127.0.0.1:5173"]),
+  new Set(
+    [
+      ...configuredOrigins,
+      vercelOrigin,
+      "https://collectibles-vite.vercel.app",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+    ].filter(Boolean),
+  ),
 );
 
 export const config = {
