@@ -57,7 +57,10 @@ export function isMobileWalletEnvironment() {
 }
 
 export function getWalletAppUrl(walletId: SupportedWalletId) {
-  const currentUrl = window.location.href;
+  const currentPage = new URL(window.location.href);
+  currentPage.searchParams.set("wallet", walletId);
+  currentPage.searchParams.set("connect", "1");
+  const currentUrl = currentPage.toString();
   const ref = window.location.origin;
 
   if (walletId === "phantom") {

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { PrimaryButton, SecondaryButton } from "@/components/art-ui";
 import { createLoginNonce, saveSession, verifyWalletSignature } from "@/lib/api";
@@ -44,34 +44,64 @@ const WALLETS: Array<{
 
 function Wallet() {
   const navigate = useNavigate();
+  const autoConnectAttempted = useRef(false);
   const [selected, setSelected] = useState<SupportedWalletId | null>("phantom");
   const [connected, setConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [status, setStatus] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleConnect = async () => {
-    if (!selected || isConnecting) return;
+  const handleConnect = useCallback(
+    async (walletId = selected) => {
+      if (!walletId || isConnecting) return;
 
-    setIsConnecting(true);
-    setStatus("");
+      setIsConnecting(true);
+      setStatus("");
 
-    try {
-      const { provider, walletAddress } = await connectSolanaWallet(selected);
-      const nonce = await createLoginNonce(walletAddress);
-      const signature = await signLoginMessage(provider, nonce.message);
-      const verified = await verifyWalletSignature(walletAddress, signature);
+      try {
+        const { provider, walletAddress } = await connectSolanaWallet(walletId);
+        const nonce = await createLoginNonce(walletAddress);
+        const signature = await signLoginMessage(provider, nonce.message);
+        const verified = await verifyWalletSignature(walletAddress, signature);
 
-      saveSession(verified.token, walletAddress);
-      setWalletAddress(walletAddress);
-      setConnected(true);
-      setStatus("Wallet connected");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Wallet connection failed.");
-    } finally {
-      setIsConnecting(false);
+        saveSession(verified.token, walletAddress);
+        setWalletAddress(walletAddress);
+        setConnected(true);
+        setStatus("Wallet connected");
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : "Wallet connection failed.");
+      } finally {
+        setIsConnecting(false);
+      }
+    },
+    [isConnecting, selected],
+  );
+
+  useEffect(() => {
+    if (autoConnectAttempted.current) return;
+
+    const search = new URLSearchParams(window.location.search);
+    const requestedWallet = search.get("wallet") as SupportedWalletId | null;
+    const shouldConnect = search.get("connect") === "1";
+
+    if (
+      !shouldConnect ||
+      !requestedWallet ||
+      !WALLETS.some((wallet) => wallet.id === requestedWallet)
+    ) {
+      return;
     }
-  };
+
+    autoConnectAttempted.current = true;
+    setSelected(requestedWallet);
+    setStatus(
+      `Requesting ${WALLETS.find((wallet) => wallet.id === requestedWallet)?.name} approval...`,
+    );
+
+    window.setTimeout(() => {
+      void handleConnect(requestedWallet);
+    }, 600);
+  }, [handleConnect]);
 
   const selectedWallet = WALLETS.find((wallet) => wallet.id === selected);
 
