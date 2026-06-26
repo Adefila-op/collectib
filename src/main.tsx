@@ -6,6 +6,14 @@ import "./styles.css";
 
 const router = getRouter();
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
+      console.error("Service worker registration failed", error);
+    });
+  });
+}
+
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
