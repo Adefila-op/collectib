@@ -2,6 +2,11 @@ import { Router } from "express";
 import { config } from "../config.js";
 import { getSupabase } from "../db.js";
 import { requireAuth } from "../middleware.js";
+import {
+  getHomePromoBanner,
+  promoBannerSchema,
+  updateHomePromoBanner,
+} from "../services/promo-banner.js";
 import type { AuthedRequest } from "../types.js";
 
 const router = Router();
@@ -62,6 +67,25 @@ router.get("/summary", async (_req, res, next) => {
       recentOrders: recentOrders.data ?? [],
       recentWebhooks: recentWebhooks.data ?? [],
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/promo-banner", async (_req, res, next) => {
+  try {
+    const banner = await getHomePromoBanner();
+    return res.json({ banner });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/promo-banner", async (req, res, next) => {
+  try {
+    const payload = promoBannerSchema.parse(req.body);
+    const banner = await updateHomePromoBanner(payload);
+    return res.json({ banner });
   } catch (error) {
     next(error);
   }

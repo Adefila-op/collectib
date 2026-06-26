@@ -1,6 +1,6 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { TextEncoder } from "node:util";
-import { Router } from "express";
+import { type Request, Router } from "express";
 import jwt from "jsonwebtoken";
 import nacl from "tweetnacl";
 import bs58 from "bs58";
@@ -19,12 +19,20 @@ const verifySchema = walletSchema.extend({
 });
 
 const emailAuthSchema = z.object({
-  email: z.string().email().max(254).transform((email) => email.trim().toLowerCase()),
+  email: z
+    .string()
+    .email()
+    .max(254)
+    .transform((email) => email.trim().toLowerCase()),
   password: z.string().min(8).max(128),
 });
 
 const emailSignupSchema = emailAuthSchema.extend({
   fullName: z.string().trim().min(2).max(80),
+});
+
+const recognitionSchema = z.object({
+  deviceId: z.string().trim().min(8).max(128).optional(),
 });
 
 type NonceRow = {
@@ -90,6 +98,44 @@ function signProfileToken(profile: ProfileRow, extra: { email?: string } = {}) {
   );
 }
 
+function hashIpAddress(ipAddress: string | undefined) {
+  if (!ipAddress) return null;
+  return createHash("sha256").update(ipAddress).digest("base64url");
+}
+
+function getAuthDeviceId(req: Request) {
+  const header = req.get("x-auth-device-id");
+  const parsed = recognitionSchema.safeParse({ deviceId: header });
+  return parsed.success ? parsed.data.deviceId : undefined;
+}
+
+function getRecognitionKeys(req: Request, bodyDeviceId?: string) {
+  const deviceId = bodyDeviceId ?? getAuthDeviceId(req);
+  const ipHash = hashIpAddress(req.ip);
+  return [
+    deviceId ? { recognition_key: `device:${deviceId}`, kind: "device" } : null,
+    ipHash ? { recognition_key: `ip:${ipHash}`, kind: "ip" } : null,
+  ].filter((key): key is { recognition_key: string; kind: "device" | "ip" } => Boolean(key));
+}
+
+async function recordAuthRecognition(req: Request, profileId: string) {
+  const keys = getRecognitionKeys(req);
+  if (keys.length === 0) return;
+
+  const supabase = getSupabase();
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("auth_recognitions").upsert(
+    keys.map((key) => ({
+      ...key,
+      profile_id: profileId,
+      last_seen_at: now,
+    })),
+    { onConflict: "recognition_key" },
+  );
+
+  if (error) throw error;
+}
+
 function getOptionalSession(req: { headers: { authorization?: string } }) {
   if (!config.jwtSecret) return null;
 
@@ -141,7 +187,35 @@ router.post("/signup", async (req, res, next) => {
     if (accountError) throw accountError;
 
     const token = signProfileToken(userProfile, { email });
+    await recordAuthRecognition(req, userProfile.id);
     return res.status(201).json({ token, profile: userProfile });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/recognition", async (req, res, next) => {
+  try {
+    const { deviceId } = recognitionSchema.parse(req.body ?? {});
+    const keys = getRecognitionKeys(req, deviceId);
+
+    if (keys.length === 0) {
+      return res.json({ recognized: false });
+    }
+
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("auth_recognitions")
+      .select("recognition_key")
+      .in(
+        "recognition_key",
+        keys.map((key) => key.recognition_key),
+      )
+      .limit(1);
+
+    if (error) throw error;
+
+    return res.json({ recognized: Boolean(data?.length) });
   } catch (error) {
     next(error);
   }
@@ -170,6 +244,7 @@ router.post("/login", async (req, res, next) => {
     }
 
     const token = signProfileToken(emailAccount.profiles, { email });
+    await recordAuthRecognition(req, emailAccount.profiles.id);
     return res.json({ token, profile: emailAccount.profiles });
   } catch (error) {
     next(error);
@@ -245,7 +320,9 @@ router.post("/verify", async (req, res, next) => {
 
       if (existingWalletError) throw existingWalletError;
       if (existingWalletOwner && existingWalletOwner.id !== session.sub) {
-        return res.status(409).json({ error: "This wallet is already connected to another account." });
+        return res
+          .status(409)
+          .json({ error: "This wallet is already connected to another account." });
       }
 
       const { data: profile, error: profileError } = await supabase
@@ -274,12 +351,14 @@ router.post("/verify", async (req, res, next) => {
       {
         wallet_address: walletAddress,
         profile_id: userProfile.id,
+        chain: "solana",
         last_connected_at: new Date().toISOString(),
       },
       { onConflict: "wallet_address" },
     );
 
     const token = signProfileToken(userProfile, session?.email ? { email: session.email } : {});
+    await recordAuthRecognition(req, userProfile.id);
 
     return res.json({ token, profile: userProfile });
   } catch (error) {

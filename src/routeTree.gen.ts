@@ -35,6 +35,7 @@ import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as HoldingsRouteImport } from './routes/holdings'
 import { Route as HelpRouteImport } from './routes/help'
+import { Route as FreeDeliveryRouteImport } from './routes/free-delivery'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as ExploreRouteImport } from './routes/explore'
@@ -200,6 +201,11 @@ const HoldingsRoute = HoldingsRouteImport.update({
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreeDeliveryRoute = FreeDeliveryRouteImport.update({
+  id: '/free-delivery',
+  path: '/free-delivery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -401,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/favorites': typeof FavoritesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/free-delivery': typeof FreeDeliveryRoute
   '/help': typeof HelpRoute
   '/holdings': typeof HoldingsRoute
   '/home': typeof HomeRoute
@@ -465,6 +472,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/favorites': typeof FavoritesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/free-delivery': typeof FreeDeliveryRoute
   '/help': typeof HelpRoute
   '/holdings': typeof HoldingsRoute
   '/home': typeof HomeRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/favorites': typeof FavoritesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/free-delivery': typeof FreeDeliveryRoute
   '/help': typeof HelpRoute
   '/holdings': typeof HoldingsRoute
   '/home': typeof HomeRoute
@@ -596,6 +605,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/favorites'
     | '/forgot-password'
+    | '/free-delivery'
     | '/help'
     | '/holdings'
     | '/home'
@@ -660,6 +670,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/favorites'
     | '/forgot-password'
+    | '/free-delivery'
     | '/help'
     | '/holdings'
     | '/home'
@@ -724,6 +735,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/favorites'
     | '/forgot-password'
+    | '/free-delivery'
     | '/help'
     | '/holdings'
     | '/home'
@@ -789,6 +801,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   FavoritesRoute: typeof FavoritesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  FreeDeliveryRoute: typeof FreeDeliveryRoute
   HelpRoute: typeof HelpRoute
   HoldingsRoute: typeof HoldingsRoute
   HomeRoute: typeof HomeRoute
@@ -1012,6 +1025,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free-delivery': {
+      id: '/free-delivery'
+      path: '/free-delivery'
+      fullPath: '/free-delivery'
+      preLoaderRoute: typeof FreeDeliveryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -1346,6 +1366,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   FavoritesRoute: FavoritesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  FreeDeliveryRoute: FreeDeliveryRoute,
   HelpRoute: HelpRoute,
   HoldingsRoute: HoldingsRoute,
   HomeRoute: HomeRoute,

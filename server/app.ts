@@ -10,8 +10,11 @@ import walletRoutes from "./routes/wallet.js";
 import webhookRoutes from "./routes/webhooks.js";
 import cronRoutes from "./routes/cron.js";
 import adminRoutes from "./routes/admin.js";
+import promoRoutes from "./routes/promos.js";
 
 export const app = express();
+
+app.set("trust proxy", 1);
 
 app.use(
   cors({
@@ -41,6 +44,7 @@ app.use("/api/artworks", artworkRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/wallets", walletRoutes);
+app.use("/api/promos", promoRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/cron", cronRoutes);
 app.use("/api/admin", adminRoutes);

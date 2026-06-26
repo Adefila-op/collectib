@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { getAdminSummary, type Order } from "@/lib/api";
+import { type FormEvent, useEffect, useState } from "react";
+import {
+  DEFAULT_PROMO_BANNER,
+  getAdminPromoBanner,
+  getAdminSummary,
+  updateAdminPromoBanner,
+  type Order,
+  type PromoBanner,
+} from "@/lib/api";
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
@@ -10,7 +17,10 @@ type AdminSummary = Awaited<ReturnType<typeof getAdminSummary>>;
 
 function Admin() {
   const [summary, setSummary] = useState<AdminSummary | null>(null);
+  const [promoBanner, setPromoBanner] = useState<PromoBanner>(DEFAULT_PROMO_BANNER);
   const [status, setStatus] = useState("Loading admin data...");
+  const [promoStatus, setPromoStatus] = useState("Loading promo banner...");
+  const [isSavingPromo, setIsSavingPromo] = useState(false);
 
   useEffect(() => {
     getAdminSummary()
@@ -21,7 +31,34 @@ function Admin() {
       .catch((error) => {
         setStatus(error instanceof Error ? error.message : "Could not load admin data.");
       });
+
+    getAdminPromoBanner()
+      .then((response) => {
+        setPromoBanner(response.banner);
+        setPromoStatus("");
+      })
+      .catch((error) => {
+        setPromoStatus(error instanceof Error ? error.message : "Could not load promo banner.");
+      });
   }, []);
+
+  const handlePromoSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSavingPromo) return;
+
+    setIsSavingPromo(true);
+    setPromoStatus("");
+
+    try {
+      const response = await updateAdminPromoBanner(promoBanner);
+      setPromoBanner(response.banner);
+      setPromoStatus("Promo banner saved.");
+    } catch (error) {
+      setPromoStatus(error instanceof Error ? error.message : "Could not save promo banner.");
+    } finally {
+      setIsSavingPromo(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pb-10">
@@ -31,6 +68,49 @@ function Admin() {
         <span className="text-xs text-white/60">Live data</span>
       </div>
       {status && <p className="px-5 text-sm text-white/60">{status}</p>}
+      <form onSubmit={handlePromoSubmit} className="mx-5 mt-3 rounded-2xl bg-white/5 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Home Promo Banner</h2>
+          <button
+            type="submit"
+            disabled={isSavingPromo}
+            className="rounded-full bg-white px-4 py-2 text-xs font-bold text-black disabled:opacity-60"
+          >
+            {isSavingPromo ? "Saving..." : "Save"}
+          </button>
+        </div>
+        {promoStatus && <p className="mt-2 text-xs text-white/60">{promoStatus}</p>}
+        <div className="mt-4 grid gap-3">
+          <AdminField
+            label="Greeting"
+            value={promoBanner.greeting}
+            onChange={(greeting) => setPromoBanner((current) => ({ ...current, greeting }))}
+          />
+          <AdminField
+            label="Offer text"
+            value={promoBanner.message}
+            onChange={(message) => setPromoBanner((current) => ({ ...current, message }))}
+          />
+          <AdminField
+            label="CTA label"
+            value={promoBanner.ctaLabel}
+            onChange={(ctaLabel) => setPromoBanner((current) => ({ ...current, ctaLabel }))}
+          />
+          <AdminField
+            label="Details title"
+            value={promoBanner.detailsTitle}
+            onChange={(detailsTitle) =>
+              setPromoBanner((current) => ({ ...current, detailsTitle }))
+            }
+          />
+          <AdminField
+            label="Details body"
+            value={promoBanner.detailsBody}
+            onChange={(detailsBody) => setPromoBanner((current) => ({ ...current, detailsBody }))}
+            multiline
+          />
+        </div>
+      </form>
       {summary && (
         <>
           <div className="grid grid-cols-2 gap-3 px-5 mt-3">
@@ -70,6 +150,40 @@ function Admin() {
         </>
       )}
     </div>
+  );
+}
+
+function AdminField({
+  label,
+  value,
+  onChange,
+  multiline = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/50">
+        {label}
+      </span>
+      {multiline ? (
+        <textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          rows={4}
+          className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/40"
+        />
+      ) : (
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/40"
+        />
+      )}
+    </label>
   );
 }
 

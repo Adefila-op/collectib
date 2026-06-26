@@ -1,8 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
-import { loginWithEmail, saveSession, signUpWithEmail } from "@/lib/api";
+import {
+  checkAuthRecognition,
+  hasKnownAuthDevice,
+  loginWithEmail,
+  saveSession,
+  signUpWithEmail,
+} from "@/lib/api";
 
 export const Route = createFileRoute("/auth")({
   component: Auth,
@@ -10,7 +16,9 @@ export const Route = createFileRoute("/auth")({
 
 function Auth() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [mode, setMode] = useState<"signup" | "login">(() =>
+    hasKnownAuthDevice() ? "login" : "signup",
+  );
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +27,26 @@ function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLogin = mode === "login";
+
+  useEffect(() => {
+    if (hasKnownAuthDevice()) {
+      setMode("login");
+      return;
+    }
+
+    let cancelled = false;
+    checkAuthRecognition()
+      .then(({ recognized }) => {
+        if (!cancelled) setMode(recognized ? "login" : "signup");
+      })
+      .catch(() => {
+        if (!cancelled) setMode("signup");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

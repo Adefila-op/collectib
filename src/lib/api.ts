@@ -5,6 +5,8 @@ const isLocalAppHost = isBrowser && /^(localhost|127\.0\.0\.1)$/.test(window.loc
 const API_BASE_URL = isLocalApiUrl && isBrowser && !isLocalAppHost ? "" : configuredApiBaseUrl;
 const AUTH_TOKEN_KEY = "collectibles.authToken";
 const WALLET_ADDRESS_KEY = "collectibles.walletAddress";
+const AUTH_DEVICE_ID_KEY = "collectibles.authDeviceId";
+const KNOWN_AUTH_DEVICE_KEY = "collectibles.knownAuthDevice";
 
 export type AuthProfile = {
   id: string;
@@ -88,9 +90,39 @@ export type WalletOverview = {
   checkedAt: string;
 };
 
+export type WalletTransaction = {
+  signature: string;
+  slot?: number;
+  blockTime?: number | null;
+  err?: unknown;
+  memo?: string | null;
+};
+
+export type PromoBanner = {
+  greeting: string;
+  message: string;
+  ctaLabel: string;
+  detailsTitle: string;
+  detailsBody: string;
+  updatedAt?: string;
+};
+
+export const DEFAULT_PROMO_BANNER: PromoBanner = {
+  greeting: "Hello Jeremy.",
+  message: "Get free delivery every $20 purchase",
+  ctaLabel: "Learn More",
+  detailsTitle: "Free delivery on $20 purchases",
+  detailsBody:
+    "Enjoy free delivery whenever your checkout total reaches $20 or more. The offer applies automatically to eligible marketplace purchases before payment.",
+};
+
 async function request<T>(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set("content-type", "application/json");
+
+  if (isBrowser) {
+    headers.set("x-auth-device-id", getAuthDeviceId());
+  }
 
   const token = getAuthToken();
   if (token) {
@@ -123,6 +155,23 @@ export function getWalletAddress() {
   return localStorage.getItem(WALLET_ADDRESS_KEY);
 }
 
+export function getAuthDeviceId() {
+  let deviceId = localStorage.getItem(AUTH_DEVICE_ID_KEY);
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem(AUTH_DEVICE_ID_KEY, deviceId);
+  }
+  return deviceId;
+}
+
+export function hasKnownAuthDevice() {
+  return localStorage.getItem(KNOWN_AUTH_DEVICE_KEY) === "true" || Boolean(getAuthToken());
+}
+
+export function markKnownAuthDevice() {
+  localStorage.setItem(KNOWN_AUTH_DEVICE_KEY, "true");
+}
+
 export function getSessionProfileId() {
   const token = getAuthToken();
   if (!token) return null;
@@ -137,6 +186,7 @@ export function getSessionProfileId() {
 export function saveSession(token: string, walletAddress: string) {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(WALLET_ADDRESS_KEY, walletAddress);
+  markKnownAuthDevice();
 }
 
 export function saveWalletAddress(walletAddress: string) {
@@ -146,6 +196,13 @@ export function saveWalletAddress(walletAddress: string) {
 export function clearSession() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(WALLET_ADDRESS_KEY);
+}
+
+export function checkAuthRecognition() {
+  return request<{ recognized: boolean }>("/api/auth/recognition", {
+    method: "POST",
+    body: JSON.stringify({ deviceId: getAuthDeviceId() }),
+  });
 }
 
 export function createLoginNonce(walletAddress: string) {
@@ -186,8 +243,18 @@ export function getWalletOverview(walletAddress: string) {
   return request<WalletOverview>(`/api/wallets/${encodeURIComponent(walletAddress)}/overview`);
 }
 
+export function getWalletTransactions(walletAddress: string, limit = 20) {
+  return request<{ signatures: WalletTransaction[] }>(
+    `/api/wallets/${encodeURIComponent(walletAddress)}/transactions?limit=${limit}`,
+  );
+}
+
 export function getHealth() {
   return request<{ ok: boolean; service: string; checkedAt: string }>("/api/health");
+}
+
+export function getHomePromoBanner() {
+  return request<{ banner: PromoBanner }>("/api/promos/home-banner");
 }
 
 export function getArtworks(status = "listed") {
@@ -277,4 +344,15 @@ export function getAdminSummary() {
       created_at?: string;
     }>;
   }>("/api/admin/summary");
+}
+
+export function getAdminPromoBanner() {
+  return request<{ banner: PromoBanner }>("/api/admin/promo-banner");
+}
+
+export function updateAdminPromoBanner(payload: PromoBanner) {
+  return request<{ banner: PromoBanner }>("/api/admin/promo-banner", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }

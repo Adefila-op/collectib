@@ -12,6 +12,7 @@ create table if not exists profiles (
 create table if not exists connected_wallets (
   wallet_address text primary key,
   profile_id uuid references profiles(id),
+  chain text not null default 'solana',
   last_connected_at timestamptz not null default now(),
   holdings_snapshot jsonb,
   created_at timestamptz not null default now()
@@ -29,6 +30,25 @@ create table if not exists email_accounts (
   email text primary key,
   profile_id uuid references profiles(id) on delete cascade not null,
   password_hash text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists auth_recognitions (
+  recognition_key text primary key,
+  profile_id uuid references profiles(id) on delete cascade,
+  kind text not null,
+  last_seen_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists promo_banners (
+  id text primary key,
+  greeting text not null,
+  message text not null,
+  cta_label text not null,
+  details_title text not null,
+  details_body text not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -157,6 +177,36 @@ create index if not exists orders_buyer_idx on orders(buyer_profile_id, created_
 create index if not exists sales_artwork_created_idx on sales(artwork_id, created_at desc);
 create index if not exists price_history_artwork_created_idx on price_history(artwork_id, created_at desc);
 create index if not exists webhook_events_provider_idx on webhook_events(provider, created_at desc);
+
+do $$
+begin
+  alter table connected_wallets
+    add column chain text not null default 'solana';
+exception
+  when duplicate_column then null;
+end $$;
+
+create index if not exists connected_wallets_profile_chain_idx on connected_wallets(profile_id, chain);
+create index if not exists auth_recognitions_profile_idx on auth_recognitions(profile_id);
+create index if not exists auth_recognitions_last_seen_idx on auth_recognitions(last_seen_at desc);
+
+do $$
+begin
+  alter table connected_wallets
+    add constraint connected_wallets_chain_check
+    check (chain in ('solana'));
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter table auth_recognitions
+    add constraint auth_recognitions_kind_check
+    check (kind in ('device', 'ip'));
+exception
+  when duplicate_object then null;
+end $$;
 
 do $$
 begin
