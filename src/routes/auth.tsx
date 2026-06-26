@@ -60,8 +60,12 @@ function Auth() {
         ? await loginWithEmail({ email, password })
         : await signUpWithEmail({ fullName, email, password });
 
+      if (!result) {
+        throw new Error("Authentication returned an empty response. Please try again.");
+      }
+
       if ("needsVerification" in result) {
-        navigate({ to: "/verify-email" });
+        navigate({ to: "/verify-email", search: { email } });
         return;
       }
 
@@ -100,7 +104,7 @@ function Auth() {
             )}
             <Field
               label="Email address"
-              placeholder="tima@gmail.com"
+              placeholder="you@example.com"
               value={email}
               onChange={setEmail}
               icon={<Mail size={16} />}

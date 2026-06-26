@@ -44,7 +44,7 @@ function Forgot() {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="tima@gmail.com"
+            placeholder="you@example.com"
             required
             className="w-full bg-transparent outline-none text-sm font-medium"
           />

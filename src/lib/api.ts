@@ -139,10 +139,15 @@ async function request<T>(path: string, init: RequestInit = {}) {
     headers.set("authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new Error("Could not reach the server. Check your connection and API URL.");
+  }
 
   const body = (await response.json().catch(() => null)) as T | { error?: string } | null;
 

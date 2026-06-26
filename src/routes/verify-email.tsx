@@ -11,7 +11,12 @@ export const Route = createFileRoute("/verify-email")({
 
 function Verify() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState("Check your inbox for the verification link.");
+  const [status, setStatus] = useState(() => {
+    const email = new URLSearchParams(window.location.search).get("email");
+    return email
+      ? `We sent a verification link to ${email}. Tap the link to activate your account.`
+      : "Check your inbox for the verification link.";
+  });
   const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {

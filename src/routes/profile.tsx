@@ -66,7 +66,7 @@ function Profile() {
         </div>
         <div>
           <p className="font-bold">Tima Bouzid</p>
-          <p className="text-xs text-foreground/60">tima@gmail.com</p>
+          <p className="text-xs text-foreground/60">Signed in</p>
         </div>
       </div>
       <div className="px-5 mt-5 space-y-5">

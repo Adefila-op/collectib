@@ -1,4 +1,4 @@
-const CACHE_NAME = "collectibles-shell-v1";
+const CACHE_NAME = "collectibles-shell-v2";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
