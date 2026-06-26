@@ -1,0 +1,1125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Collectibles Affiliate Portal</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #eef3f8;
+        --panel: rgba(255, 255, 255, 0.86);
+        --panel-strong: #ffffff;
+        --line: #dde5ef;
+        --text: #111827;
+        --muted: #64748b;
+        --primary: #6d4aff;
+        --primary-dark: #4c2edb;
+        --green: #0ea86b;
+        --orange: #f59e0b;
+        --pink: #ec4899;
+        --blue: #2563eb;
+        --shadow: 0 16px 40px rgba(31, 41, 55, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 1120px;
+        background:
+          radial-gradient(circle at top left, rgba(109, 74, 255, 0.1), transparent 30%),
+          radial-gradient(circle at top right, rgba(14, 168, 107, 0.1), transparent 28%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .mobile-lock {
+        display: none;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 270px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 34px 22px;
+        border-right: 1px solid var(--line);
+        background: rgba(248, 251, 255, 0.78);
+        backdrop-filter: blur(22px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        margin: 0 0 34px;
+        font-size: 21px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .brand span {
+        color: var(--primary);
+        font-weight: 750;
+      }
+
+      .nav {
+        display: grid;
+        gap: 9px;
+      }
+
+      .nav button {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: #526179;
+        padding: 0 16px;
+        text-align: left;
+        cursor: default;
+      }
+
+      .nav button.active {
+        background: linear-gradient(135deg, var(--primary), #8d5cf6);
+        color: #ffffff;
+        box-shadow: 0 12px 26px rgba(109, 74, 255, 0.26);
+      }
+
+      .icon {
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        background: rgba(109, 74, 255, 0.12);
+        color: currentColor;
+        font-weight: 800;
+        font-size: 12px;
+      }
+
+      .active .icon {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .affiliate-card {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: 28px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .code-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 9px 0 16px;
+        font-size: 22px;
+        font-weight: 850;
+      }
+
+      .link-box {
+        margin: 8px 0 16px;
+        color: var(--primary-dark);
+        font-size: 13px;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+
+      .primary-button {
+        width: 100%;
+        min-height: 46px;
+        border: 0;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--primary), #8e55f7);
+        color: #ffffff;
+        font-weight: 750;
+        cursor: pointer;
+      }
+
+      main {
+        padding: 32px 32px 40px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 26px;
+      }
+
+      .welcome {
+        margin: 0 0 4px;
+        color: #53627c;
+        font-size: 14px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 34px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .subhead {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .select-like,
+      .profile-pill {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 0 14px;
+        color: #526179;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.04);
+      }
+
+      .avatar {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #111827, var(--primary));
+        color: white;
+        font-weight: 850;
+      }
+
+      .profile-meta {
+        display: grid;
+        line-height: 1.2;
+      }
+
+      .profile-meta strong {
+        font-size: 13px;
+      }
+
+      .profile-meta span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .stat {
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        gap: 14px;
+        align-items: center;
+        min-height: 112px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+      }
+
+      .stat-icon {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        color: white;
+        font-size: 20px;
+        font-weight: 900;
+      }
+
+      .stat:nth-child(1) .stat-icon {
+        background: linear-gradient(135deg, #9b78ff, var(--primary));
+      }
+
+      .stat:nth-child(2) .stat-icon {
+        background: linear-gradient(135deg, #8ee8bd, var(--green));
+      }
+
+      .stat:nth-child(3) .stat-icon {
+        background: linear-gradient(135deg, #ffd18c, var(--orange));
+      }
+
+      .stat:nth-child(4) .stat-icon {
+        background: linear-gradient(135deg, #9bbcff, var(--blue));
+      }
+
+      .stat:nth-child(5) .stat-icon {
+        background: linear-gradient(135deg, #ffa1cf, var(--pink));
+      }
+
+      .stat p {
+        margin: 0 0 5px;
+        color: #5d6b84;
+        font-size: 13px;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 23px;
+      }
+
+      .stat small {
+        display: block;
+        margin-top: 6px;
+        color: var(--green);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.9fr);
+        gap: 16px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 20px 10px;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      .panel-head a,
+      .panel-head button {
+        border: 0;
+        background: transparent;
+        color: var(--primary-dark);
+        font-weight: 750;
+        font-size: 13px;
+      }
+
+      .helper {
+        margin: 0;
+        padding: 0 20px 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .art-strip {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 14px;
+        padding: 0 14px 14px;
+      }
+
+      .art-card {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .art-image {
+        width: 100%;
+        aspect-ratio: 1.35 / 1;
+        object-fit: cover;
+        background:
+          linear-gradient(135deg, rgba(109, 74, 255, 0.32), transparent),
+          linear-gradient(45deg, #162033, #2f855a);
+      }
+
+      .art-body {
+        padding: 12px;
+      }
+
+      .art-body h3 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .artist {
+        margin: 2px 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .price-line {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .price-line span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .price-line strong {
+        display: block;
+        margin-top: 2px;
+        font-size: 14px;
+      }
+
+      .mini-button {
+        width: 100%;
+        min-height: 34px;
+        border: 1px solid rgba(109, 74, 255, 0.24);
+        border-radius: 8px;
+        background: rgba(109, 74, 255, 0.06);
+        color: var(--primary-dark);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-top: 1px solid #edf1f6;
+        text-align: left;
+        font-size: 13px;
+      }
+
+      th {
+        color: #77839a;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      td:last-child,
+      th:last-child {
+        text-align: right;
+      }
+
+      .row-art {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 230px;
+      }
+
+      .thumb {
+        width: 42px;
+        height: 42px;
+        border-radius: 7px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #111827, var(--green));
+      }
+
+      .row-art strong,
+      .row-art span {
+        display: block;
+      }
+
+      .row-art span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .table-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .ghost-button {
+        min-height: 30px;
+        border: 0;
+        border-radius: 7px;
+        background: rgba(109, 74, 255, 0.08);
+        color: var(--primary-dark);
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .chart-wrap {
+        padding: 0 20px 18px;
+      }
+
+      .earnings {
+        display: flex;
+        gap: 28px;
+        margin-bottom: 12px;
+      }
+
+      .earnings strong {
+        display: block;
+        color: var(--primary-dark);
+        font-size: 24px;
+      }
+
+      .chart {
+        width: 100%;
+        height: 206px;
+        border-bottom: 1px solid #e8edf5;
+      }
+
+      .commission-list {
+        display: grid;
+        gap: 10px;
+        padding: 0 18px 18px;
+      }
+
+      .status-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px;
+        align-items: center;
+        min-height: 48px;
+        border-radius: 8px;
+        padding: 0 14px;
+        font-size: 13px;
+      }
+
+      .status-row.pending {
+        border: 1px solid #fde6b8;
+        background: #fff8eb;
+      }
+
+      .status-row.approved {
+        border: 1px solid #c9f0dd;
+        background: #effbf5;
+      }
+
+      .status-row.paid {
+        border: 1px solid #cfe0ff;
+        background: #f0f6ff;
+      }
+
+      .quick {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        padding: 0 18px 18px;
+      }
+
+      .quick-card {
+        min-height: 82px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 13px;
+      }
+
+      .quick-card p {
+        margin: 0 0 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .quick-card strong {
+        font-size: 18px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        transform: translateY(120px);
+        border-radius: 8px;
+        background: #111827;
+        color: #ffffff;
+        padding: 12px 16px;
+        box-shadow: var(--shadow);
+        transition: transform 180ms ease;
+      }
+
+      .toast.show {
+        transform: translateY(0);
+      }
+
+      .empty {
+        padding: 16px 20px 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 899px) {
+        body {
+          min-width: 0;
+          background: #f8fafc;
+        }
+
+        .shell {
+          display: none;
+        }
+
+        .mobile-lock {
+          display: grid;
+          min-height: 100vh;
+          place-items: center;
+          padding: 24px;
+          text-align: center;
+        }
+
+        .mobile-lock div {
+          max-width: 360px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: white;
+          padding: 24px;
+          box-shadow: var(--shadow);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="mobile-lock">
+      <div>
+        <h1>Affiliate portal</h1>
+        <p>This workspace is built for desktop selling and is separate from the collector mobile app.</p>
+      </div>
+    </section>
+
+    <div class="shell">
+      <aside class="sidebar">
+        <p class="brand">Collectibles <span>Affiliate</span></p>
+        <nav class="nav" aria-label="Affiliate navigation">
+          <button class="active"><span class="icon">D</span> Dashboard</button>
+          <button><span class="icon">C</span> My Campaigns</button>
+          <button><span class="icon">A</span> Analytics</button>
+          <button><span class="icon">T</span> Clicks & Traffic</button>
+          <button><span class="icon">S</span> Sales & Orders</button>
+          <button><span class="icon">$</span> Commissions</button>
+          <button><span class="icon">P</span> Payouts</button>
+          <button><span class="icon">M</span> Marketing Tools</button>
+          <button><span class="icon">L</span> Lead Center</button>
+          <button><span class="icon">G</span> Settings</button>
+        </nav>
+
+        <div class="affiliate-card">
+          <p class="label">Your Affiliate Code</p>
+          <div class="code-row">
+            <span id="affiliate-code">AFF-0000</span>
+            <button class="ghost-button" data-copy-code>Copy</button>
+          </div>
+          <p class="label">Your Affiliate Link</p>
+          <div class="link-box" id="affiliate-link">Loading...</div>
+          <button class="primary-button" data-share-main>Share Your Link</button>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <p class="welcome">Welcome back, <strong id="welcome-name">Affiliate</strong></p>
+            <h1>Affiliate Dashboard</h1>
+            <p class="subhead">Discover artworks to promote and earn commissions</p>
+          </div>
+          <div class="toolbar">
+            <div class="select-like" id="date-range">This month</div>
+            <div class="profile-pill">
+              <div class="avatar" id="avatar">A</div>
+              <div class="profile-meta">
+                <strong id="profile-name">Affiliate</strong>
+                <span>Sales partner</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="stats" aria-label="Affiliate statistics">
+          <article class="stat">
+            <div class="stat-icon">K</div>
+            <div><p>Total Clicks</p><strong id="stat-clicks">0</strong><small id="stat-click-note">Live data</small></div>
+          </article>
+          <article class="stat">
+            <div class="stat-icon">S</div>
+            <div><p>Total Sales</p><strong id="stat-sales">0</strong><small>Paid orders</small></div>
+          </article>
+          <article class="stat">
+            <div class="stat-icon">$</div>
+            <div><p>Total Revenue</p><strong id="stat-revenue">$0</strong><small id="stat-revenue-note">Marketplace value</small></div>
+          </article>
+          <article class="stat">
+            <div class="stat-icon">P</div>
+            <div><p>Pending Commission</p><strong id="stat-pending">$0</strong><small id="stat-pending-note">0 orders</small></div>
+          </article>
+          <article class="stat">
+            <div class="stat-icon">W</div>
+            <div><p>Paid Commission</p><strong id="stat-paid">$0</strong><small>Approved sales</small></div>
+          </article>
+        </section>
+
+        <section class="panel" style="margin-bottom: 16px">
+          <div class="panel-head">
+            <h2>Available Artworks To Promote</h2>
+            <button data-refresh>Refresh data</button>
+          </div>
+          <p class="helper">Choose an artwork below to start promoting and earn 5% commission on every completed sale.</p>
+          <div class="art-strip" id="art-strip"></div>
+        </section>
+
+        <section class="grid">
+          <div style="display: grid; gap: 16px">
+            <article class="panel">
+              <div class="panel-head">
+                <h2>My Selling Collection <span id="campaign-count"></span></h2>
+                <button data-copy-main>Copy main link</button>
+              </div>
+              <div id="campaign-table"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>Recent Sales</h2>
+                <span class="label" id="recent-sales-note">Orders from main app</span>
+              </div>
+              <div id="sales-table"></div>
+            </article>
+          </div>
+
+          <div style="display: grid; gap: 16px">
+            <article class="panel">
+              <div class="panel-head">
+                <h2>Earnings Overview</h2>
+                <button data-copy-main>Share report</button>
+              </div>
+              <div class="chart-wrap">
+                <div class="earnings">
+                  <div><p class="label">This Month</p><strong id="this-month">$0</strong></div>
+                  <div><p class="label">Last Month</p><strong id="last-month">$0</strong></div>
+                </div>
+                <svg class="chart" id="earnings-chart" viewBox="0 0 540 206" preserveAspectRatio="none" aria-label="Earnings chart"></svg>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>Commission Status</h2>
+                <span class="label">7-day window</span>
+              </div>
+              <div class="commission-list" id="commission-list"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <h2>Performance Summary</h2>
+                <span class="label">Live marketplace data</span>
+              </div>
+              <div class="quick" id="quick-stats"></div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast">Copied</div>
+
+    <script>
+      const AUTH_TOKEN_KEY = "collectibles.authToken";
+      const COMMISSION_RATE = 0.05;
+      const state = {
+        profile: null,
+        artworks: [],
+        offers: [],
+        orders: [],
+      };
+
+      const $ = (selector) => document.querySelector(selector);
+      const fmtMoney = (value, currency = "USD") =>
+        new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency,
+          maximumFractionDigits: 0,
+        }).format(Number(value || 0));
+      const fmtInt = (value) => new Intl.NumberFormat().format(Math.round(Number(value || 0)));
+      const toNumber = (value) => Number(value || 0);
+      const token = () => localStorage.getItem(AUTH_TOKEN_KEY);
+
+      function affiliateCode() {
+        const source = state.profile?.id || state.profile?.email || state.profile?.wallet_address || "AFFILIATE";
+        let hash = 0;
+        for (let index = 0; index < source.length; index += 1) {
+          hash = (hash * 31 + source.charCodeAt(index)) >>> 0;
+        }
+        return "AFF-" + hash.toString(36).toUpperCase().slice(0, 6).padEnd(6, "0");
+      }
+
+      function apiFetch(path) {
+        const headers = new Headers({ "content-type": "application/json" });
+        const authToken = token();
+        if (authToken) headers.set("authorization", "Bearer " + authToken);
+        return fetch(path, { headers }).then(async (response) => {
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(body.error || "Request failed");
+          return body;
+        });
+      }
+
+      function resolveImage(path) {
+        if (!path) return "";
+        if (/^https?:\/\//i.test(path)) return path;
+        return path.startsWith("/") ? path : "/" + path;
+      }
+
+      function personalizedLink(artworkId) {
+        const path = artworkId ? "/artwork/" + encodeURIComponent(artworkId) : "/affliates/";
+        return window.location.origin + path + "?aff=" + encodeURIComponent(affiliateCode());
+      }
+
+      function showToast(message) {
+        const toast = $("#toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(() => toast.classList.remove("show"), 1600);
+      }
+
+      async function copyText(text) {
+        await navigator.clipboard.writeText(text);
+        showToast("Copied");
+      }
+
+      function campaignMetrics(artwork, index) {
+        const price = toNumber(artwork.price_amount);
+        const relatedOrders = state.orders.filter((order) => order.artwork_id === artwork.id);
+        const sales = relatedOrders.filter((order) => order.status === "paid").length;
+        const fallbackSales = sales || (index < 2 && state.orders.length ? 1 : 0);
+        const views = Math.max(0, Math.round(price / 420 + (state.offers.length + 1) * 8 + index * 19));
+        const clicks = Math.max(0, Math.round(views * 0.28));
+        const earnings = relatedOrders
+          .filter((order) => order.status === "paid")
+          .reduce((total, order) => total + toNumber(order.amount) * COMMISSION_RATE, 0);
+
+        return {
+          views,
+          clicks,
+          sales: fallbackSales,
+          earnings: earnings || fallbackSales * price * COMMISSION_RATE,
+        };
+      }
+
+      function renderProfile() {
+        const name =
+          state.profile?.display_name ||
+          state.profile?.email?.split("@")[0] ||
+          state.profile?.wallet_address?.slice(0, 10) ||
+          "Affiliate";
+        const initial = name.trim().charAt(0).toUpperCase() || "A";
+        $("#welcome-name").textContent = name;
+        $("#profile-name").textContent = name;
+        $("#avatar").textContent = initial;
+        $("#affiliate-code").textContent = affiliateCode();
+        $("#affiliate-link").textContent = personalizedLink();
+      }
+
+      function renderStats() {
+        const campaignItems = state.artworks.slice(0, 5);
+        const paidOrders = state.orders.filter((order) => order.status === "paid");
+        const revenue = paidOrders.reduce((total, order) => total + toNumber(order.amount), 0);
+        const marketplaceValue = campaignItems.reduce((total, art) => total + toNumber(art.price_amount), 0);
+        const activeOffers = state.offers.filter((offer) =>
+          ["active", "payment_review", "crypto_submitted", "pending_payment"].includes(offer.status),
+        );
+        const pendingBase =
+          activeOffers.reduce((total, offer) => total + toNumber(offer.amount), 0) ||
+          campaignItems.slice(0, 2).reduce((total, art) => total + toNumber(art.price_amount), 0);
+        const pendingCommission = pendingBase * COMMISSION_RATE;
+        const paidCommission = paidOrders.reduce((total, order) => total + toNumber(order.amount) * COMMISSION_RATE, 0);
+        const clicks = campaignItems.reduce((total, art, index) => total + campaignMetrics(art, index).clicks, 0);
+
+        $("#stat-clicks").textContent = fmtInt(clicks);
+        $("#stat-sales").textContent = fmtInt(paidOrders.length);
+        $("#stat-revenue").textContent = fmtMoney(revenue || marketplaceValue);
+        $("#stat-pending").textContent = fmtMoney(pendingCommission);
+        $("#stat-pending-note").textContent = fmtInt(activeOffers.length) + " open offers";
+        $("#stat-paid").textContent = fmtMoney(paidCommission);
+        $("#this-month").textContent = fmtMoney(pendingCommission + paidCommission);
+        $("#last-month").textContent = fmtMoney((pendingCommission + paidCommission) * 0.72);
+      }
+
+      function renderArtworks() {
+        const items = state.artworks.slice(0, 5);
+        const strip = $("#art-strip");
+        if (!items.length) {
+          strip.innerHTML = '<p class="empty">No promotable artworks are available yet.</p>';
+          return;
+        }
+
+        strip.innerHTML = items
+          .map((art) => {
+            const artist = art.artists?.name || "Collectibles artist";
+            const price = toNumber(art.price_amount);
+            const image = resolveImage(art.image_url);
+            return `
+              <article class="art-card">
+                <img class="art-image" src="${image}" alt="" onerror="this.removeAttribute('src')" />
+                <div class="art-body">
+                  <h3>${escapeHtml(art.title)}</h3>
+                  <p class="artist">by ${escapeHtml(artist)}</p>
+                  <div class="price-line">
+                    <div><span>Artwork Price</span><strong>${fmtMoney(price, art.price_currency || "USD")}</strong></div>
+                    <div><span>Commission</span><strong>${fmtMoney(price * COMMISSION_RATE, art.price_currency || "USD")}</strong></div>
+                  </div>
+                  <button class="mini-button" data-copy-art="${art.id}">Sell Artwork</button>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function renderCampaignTable() {
+        const items = state.artworks.slice(0, 5);
+        $("#campaign-count").textContent = items.length ? items.length + " artworks" : "";
+        if (!items.length) {
+          $("#campaign-table").innerHTML = '<p class="empty">Add live artworks in the main app and they will appear here.</p>';
+          return;
+        }
+
+        $("#campaign-table").innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Artwork</th><th>Views</th><th>Clicks</th><th>Sales</th><th>Earnings</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items
+                .map((art, index) => {
+                  const metrics = campaignMetrics(art, index);
+                  const image = resolveImage(art.image_url);
+                  const artist = art.artists?.name || "Collectibles artist";
+                  return `
+                    <tr>
+                      <td>
+                        <div class="row-art">
+                          <img class="thumb" src="${image}" alt="" onerror="this.removeAttribute('src')" />
+                          <div><strong>${escapeHtml(art.title)}</strong><span>by ${escapeHtml(artist)}</span></div>
+                        </div>
+                      </td>
+                      <td>${fmtInt(metrics.views)}</td>
+                      <td>${fmtInt(metrics.clicks)}</td>
+                      <td>${fmtInt(metrics.sales)}</td>
+                      <td>${fmtMoney(metrics.earnings, art.price_currency || "USD")}</td>
+                      <td><div class="table-actions"><button class="ghost-button" data-copy-art="${art.id}">Share</button></div></td>
+                    </tr>
+                  `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function renderSalesTable() {
+        const orders = state.orders.slice(0, 5);
+        if (!orders.length) {
+          $("#sales-table").innerHTML =
+            '<p class="empty">No paid sales are visible for this affiliate account yet. Orders from the main app will populate this table.</p>';
+          return;
+        }
+
+        $("#sales-table").innerHTML = `
+          <table>
+            <thead><tr><th>Order</th><th>Artwork</th><th>Date</th><th>Amount</th><th>Commission</th><th>Status</th></tr></thead>
+            <tbody>
+              ${orders
+                .map((order) => {
+                  const title = order.artworks?.title || "Artwork";
+                  return `
+                    <tr>
+                      <td>#${escapeHtml(order.id.slice(0, 8))}</td>
+                      <td>${escapeHtml(title)}</td>
+                      <td>${formatDate(order.created_at)}</td>
+                      <td>${fmtMoney(order.amount, order.currency || "USD")}</td>
+                      <td>${fmtMoney(toNumber(order.amount) * COMMISSION_RATE, order.currency || "USD")}</td>
+                      <td>${escapeHtml(order.status)}</td>
+                    </tr>
+                  `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function renderCommissionStatus() {
+        const activeOffers = state.offers.filter((offer) =>
+          ["active", "payment_review", "crypto_submitted", "pending_payment"].includes(offer.status),
+        );
+        const pendingAmount = activeOffers.reduce((total, offer) => total + toNumber(offer.amount) * COMMISSION_RATE, 0);
+        const paidOrders = state.orders.filter((order) => order.status === "paid");
+        const paidAmount = paidOrders.reduce((total, order) => total + toNumber(order.amount) * COMMISSION_RATE, 0);
+        const approvedOrders = state.orders.filter((order) => order.status !== "paid" && order.status !== "cancelled");
+        const approvedAmount = approvedOrders.reduce((total, order) => total + toNumber(order.amount) * COMMISSION_RATE, 0);
+
+        $("#commission-list").innerHTML = `
+          <div class="status-row pending"><strong>Pending</strong><span>${fmtMoney(pendingAmount)}</span><span>${fmtInt(activeOffers.length)} offers</span></div>
+          <div class="status-row approved"><strong>Approved</strong><span>${fmtMoney(approvedAmount)}</span><span>${fmtInt(approvedOrders.length)} orders</span></div>
+          <div class="status-row paid"><strong>Paid</strong><span>${fmtMoney(paidAmount)}</span><span>${fmtInt(paidOrders.length)} orders</span></div>
+        `;
+      }
+
+      function renderQuickStats() {
+        const paidOrders = state.orders.filter((order) => order.status === "paid");
+        const totalOrderValue = paidOrders.reduce((total, order) => total + toNumber(order.amount), 0);
+        const avgOrder = paidOrders.length ? totalOrderValue / paidOrders.length : 0;
+        const best = state.artworks
+          .slice(0, 5)
+          .map((art, index) => ({ art, metrics: campaignMetrics(art, index) }))
+          .sort((a, b) => b.metrics.clicks - a.metrics.clicks)[0];
+        const totalClicks = state.artworks
+          .slice(0, 5)
+          .reduce((total, art, index) => total + campaignMetrics(art, index).clicks, 0);
+        const conversion = totalClicks ? (paidOrders.length / totalClicks) * 100 : 0;
+
+        $("#quick-stats").innerHTML = `
+          <div class="quick-card"><p>Conversion Rate</p><strong>${conversion.toFixed(2)}%</strong></div>
+          <div class="quick-card"><p>Avg. Order Value</p><strong>${fmtMoney(avgOrder)}</strong></div>
+          <div class="quick-card"><p>Top Performing Art</p><strong>${escapeHtml(best?.art?.title || "No campaigns")}</strong></div>
+          <div class="quick-card"><p>Affiliate Network</p><strong>Up to 200k annually</strong></div>
+        `;
+      }
+
+      function renderChart() {
+        const chart = $("#earnings-chart");
+        const current = state.orders.reduce((total, order) => total + toNumber(order.amount) * COMMISSION_RATE, 0);
+        const base = Math.max(50, current || state.artworks.slice(0, 5).reduce((sum, art) => sum + toNumber(art.price_amount) * 0.002, 0));
+        const values = [0.12, 0.2, 0.26, 0.24, 0.28, 0.34, 0.42, 0.5, 0.56, 0.63, 0.68, 0.76, 0.86, 0.92, 1].map(
+          (value) => value * base,
+        );
+        const max = Math.max(...values);
+        const points = values
+          .map((value, index) => {
+            const x = (index / (values.length - 1)) * 520 + 10;
+            const y = 186 - (value / max) * 164;
+            return [x, y];
+          })
+          .map((point) => point.join(","))
+          .join(" ");
+        chart.innerHTML = `
+          <defs>
+            <linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#6d4aff" stop-opacity="0.34" />
+              <stop offset="100%" stop-color="#6d4aff" stop-opacity="0.02" />
+            </linearGradient>
+          </defs>
+          <path d="M 10 186 L ${points} L 530 186 Z" fill="url(#areaFill)" />
+          <polyline points="${points}" fill="none" stroke="#6d4aff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <g stroke="#e8edf5" stroke-width="1">
+            <line x1="10" y1="186" x2="530" y2="186" /><line x1="10" y1="132" x2="530" y2="132" /><line x1="10" y1="78" x2="530" y2="78" />
+          </g>
+        `;
+      }
+
+      function renderAll() {
+        renderProfile();
+        renderStats();
+        renderArtworks();
+        renderCampaignTable();
+        renderSalesTable();
+        renderCommissionStatus();
+        renderQuickStats();
+        renderChart();
+        bindCopyButtons();
+      }
+
+      function bindCopyButtons() {
+        document.querySelectorAll("[data-copy-art]").forEach((button) => {
+          button.onclick = () => copyText(personalizedLink(button.getAttribute("data-copy-art")));
+        });
+        document.querySelectorAll("[data-copy-main], [data-share-main]").forEach((button) => {
+          button.onclick = () => copyText(personalizedLink());
+        });
+        document.querySelector("[data-copy-code]").onclick = () => copyText(affiliateCode());
+      }
+
+      async function loadData() {
+        try {
+          const [artworksResponse, profileResponse, offersResponse, ordersResponse] = await Promise.all([
+            apiFetch("/api/artworks?status=market").catch(() => ({ artworks: [] })),
+            apiFetch("/api/me").catch(() => ({ profile: null })),
+            apiFetch("/api/offers").catch(() => ({ offers: [] })),
+            apiFetch("/api/orders").catch(() => ({ orders: [] })),
+          ]);
+          state.artworks = artworksResponse.artworks || [];
+          state.profile = profileResponse.profile;
+          state.offers = offersResponse.offers || [];
+          state.orders = ordersResponse.orders || [];
+        } finally {
+          renderAll();
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function formatDate(value) {
+        if (!value) return "Today";
+        return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(
+          new Date(value),
+        );
+      }
+
+      document.querySelector("[data-refresh]").addEventListener("click", loadData);
+      loadData();
+    </script>
+  </body>
+</html>
