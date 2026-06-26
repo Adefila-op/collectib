@@ -10,20 +10,19 @@ type SolanaProvider = {
 
 declare global {
   interface Window {
-    solana?: SolanaProvider;
-    solflare?: SolanaProvider;
-    metamask?: {
+    phantom?: {
       solana?: SolanaProvider;
     };
+    solana?: SolanaProvider;
+    solflare?: SolanaProvider;
   }
 }
 
-export type SupportedWalletId = "phantom" | "solflare" | "metamask";
+export type SupportedWalletId = "phantom" | "solflare";
 
 const WALLET_NAMES: Record<SupportedWalletId, string> = {
   phantom: "Phantom",
   solflare: "Solflare",
-  metamask: "MetaMask",
 };
 
 function isSolanaProvider(provider: SolanaProvider | undefined | null): provider is SolanaProvider {
@@ -31,25 +30,23 @@ function isSolanaProvider(provider: SolanaProvider | undefined | null): provider
 }
 
 export function getSolanaProvider(walletId: SupportedWalletId) {
-  if (walletId === "phantom" && isSolanaProvider(window.solana) && window.solana.isPhantom) {
-    return window.solana;
+  if (walletId === "phantom") {
+    if (isSolanaProvider(window.phantom?.solana) && window.phantom.solana.isPhantom) {
+      return window.phantom.solana;
+    }
+    if (isSolanaProvider(window.solana) && window.solana.isPhantom) {
+      return window.solana;
+    }
   }
   if (walletId === "solflare" && isSolanaProvider(window.solflare) && window.solflare.isSolflare) {
     return window.solflare;
-  }
-  if (walletId === "metamask") {
-    if (isSolanaProvider(window.metamask?.solana)) return window.metamask.solana;
-    if (isSolanaProvider(window.solana) && !window.solana.isPhantom && !window.solana.isSolflare) {
-      return window.solana;
-    }
   }
   return null;
 }
 
 export function getWalletInstallUrl(walletId: SupportedWalletId) {
   if (walletId === "phantom") return "https://phantom.app/download";
-  if (walletId === "solflare") return "https://solflare.com/download";
-  return "https://metamask.io/download/";
+  return "https://solflare.com/download";
 }
 
 export function isMobileWalletEnvironment() {
@@ -70,8 +67,7 @@ export function getWalletAppUrl(walletId: SupportedWalletId) {
     return `https://solflare.com/ul/v1/browse/${encodeURIComponent(currentUrl)}?ref=${encodeURIComponent(ref)}`;
   }
 
-  const dappUrl = currentUrl.replace(/^https?:\/\//, "");
-  return `https://metamask.app.link/dapp/${dappUrl}`;
+  return currentUrl;
 }
 
 export async function connectSolanaWallet(walletId: SupportedWalletId) {

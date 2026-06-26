@@ -33,13 +33,6 @@ const WALLETS: Array<{
     letter: "P",
   },
   { id: "solflare", name: "Solflare", desc: "Solana wallet", color: "#FC7A1E", letter: "S" },
-  {
-    id: "metamask",
-    name: "MetaMask",
-    desc: "Solana wallet only",
-    color: "#F6851B",
-    letter: "M",
-  },
 ];
 
 function Wallet() {
