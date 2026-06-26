@@ -10,21 +10,25 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPassword() {
   const navigate = useNavigate();
   const search = useMemo(() => new URLSearchParams(window.location.search), []);
-  const token = search.get("token") ?? "";
+  const hash = useMemo(() => new URLSearchParams(window.location.hash.replace(/^#/, "")), []);
+  const accessToken = hash.get("access_token") ?? "";
+  const refreshToken = hash.get("refresh_token") ?? "";
   const email = search.get("email") ?? "";
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState(token && email ? "" : "Reset link is missing details.");
+  const [status, setStatus] = useState(
+    accessToken && refreshToken && email ? "" : "Reset link is missing details.",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmitting || !token || !email) return;
+    if (isSubmitting || !accessToken || !refreshToken || !email) return;
 
     setIsSubmitting(true);
     setStatus("");
 
     try {
-      const response = await resetPassword({ email, token, password });
+      const response = await resetPassword({ email, accessToken, refreshToken, password });
       saveSession(response.token, response.profile.wallet_address);
       navigate({ to: "/home" });
     } catch (error) {
@@ -60,7 +64,7 @@ function ResetPassword() {
       <div className="p-6">
         <button
           type="submit"
-          disabled={isSubmitting || !token || !email}
+          disabled={isSubmitting || !accessToken || !refreshToken || !email}
           className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base active:scale-[0.98] transition disabled:opacity-60"
         >
           {isSubmitting ? "Saving..." : "Reset Password"}

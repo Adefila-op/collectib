@@ -14,7 +14,7 @@ export const promoBannerSchema = z.object({
 export type PromoBannerConfig = z.infer<typeof promoBannerSchema>;
 
 export const defaultPromoBanner: PromoBannerConfig = {
-  greeting: "Hello Jeremy.",
+  greeting: "Hello Collector.",
   message: "Get free delivery every $20 purchase",
   ctaLabel: "Learn More",
   detailsTitle: "Free delivery on $20 purchases",

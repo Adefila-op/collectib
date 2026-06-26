@@ -27,6 +27,7 @@ export const config = {
   appOrigins,
   jwtSecret: process.env.JWT_SECRET ?? "",
   supabaseUrl: process.env.SUPABASE_URL ?? "",
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   heliusApiKey: process.env.HELIUS_API_KEY ?? "",
   heliusWebhookSecret: process.env.HELIUS_WEBHOOK_SECRET ?? "",
@@ -35,12 +36,6 @@ export const config = {
   paymentRedirectUrl: process.env.PAYMENT_REDIRECT_URL ?? "",
   publicAppUrl: process.env.PUBLIC_APP_URL ?? configuredOrigins[0] ?? "http://localhost:5173",
   cronSecret: process.env.CRON_SECRET ?? "",
-  smtpHost: process.env.SMTP_HOST ?? "smtp-relay.brevo.com",
-  smtpPort: Number(process.env.SMTP_PORT ?? 587),
-  smtpUser: process.env.BREVO_SMTP_USER ?? process.env.SMTP_USER ?? "",
-  smtpPass: process.env.BREVO_SMTP_KEY ?? process.env.SMTP_PASS ?? "",
-  smtpFromEmail: process.env.SMTP_FROM_EMAIL ?? "",
-  smtpFromName: process.env.SMTP_FROM_NAME ?? "Collectibles",
   adminWallets: (process.env.ADMIN_WALLETS ?? "")
     .split(",")
     .map((wallet) => wallet.trim())

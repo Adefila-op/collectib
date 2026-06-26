@@ -35,3 +35,16 @@ export function getSupabase() {
 
   return client;
 }
+
+export function createSupabaseAuthClient() {
+  if (!config.supabaseUrl || !config.supabaseAnonKey) {
+    throw new Error("Supabase Auth is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY.");
+  }
+
+  return createClient<LooseDatabase>(config.supabaseUrl, config.supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}

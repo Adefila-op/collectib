@@ -10,23 +10,33 @@ function Invite() {
   return (
     <div className="min-h-screen bg-background pb-10">
       <StatusBar />
-      <TopBar title="Invite friends, earn rewards" />
-      <div className="px-6 text-center">
-        <div className="my-6">
-          <svg viewBox="0 0 200 140" className="w-56 h-40 mx-auto">
-            <ellipse cx="70" cy="100" rx="30" ry="36" fill="#C9BCF5" />
-            <circle cx="70" cy="72" r="14" fill="#2D1B4E" />
-            <ellipse cx="135" cy="100" rx="30" ry="36" fill="#8B7CC9" />
-            <circle cx="135" cy="72" r="14" fill="#2D1B4E" />
-          </svg>
+      <TopBar title="Affiliate Network" />
+      <div className="px-5">
+        <div className="rounded-3xl bg-[#E8F4EA] p-5">
+          <p className="text-sm font-semibold text-primary">Collectibles partners</p>
+          <h1 className="mt-2 text-3xl font-extrabold leading-tight">
+            Earn up to 200k annually
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Join our affiliate network by introducing collectors, artists, galleries, and curators
+            to Collectibles.
+          </p>
         </div>
-        <h1 className="text-xl font-extrabold">
-          Get $50 credit for each friend who makes their first purchase.
-        </h1>
-        <div className="mt-6 rounded-2xl bg-secondary px-4 py-3 text-sm font-mono">
-          collectibles.art/invite/tima
+
+        <div className="mt-5 space-y-3">
+          {[
+            ["Refer collectors", "Share Collectibles with qualified buyers and art investors."],
+            ["Introduce artists", "Bring verified artists and real asset collections to the platform."],
+            ["Track rewards", "Affiliate activity is reviewed by admin before payout approval."],
+          ].map(([title, body]) => (
+            <div key={title} className="rounded-2xl bg-secondary p-4">
+              <p className="text-sm font-semibold">{title}</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{body}</p>
+            </div>
+          ))}
         </div>
-        <PrimaryButton className="mt-4">Share Link</PrimaryButton>
+
+        <PrimaryButton className="mt-6">Join Affiliate Network</PrimaryButton>
       </div>
     </div>
   );

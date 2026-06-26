@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { TextEncoder } from "node:util";
 import { type Request, Router } from "express";
 import jwt from "jsonwebtoken";
@@ -6,8 +6,7 @@ import nacl from "tweetnacl";
 import bs58 from "bs58";
 import { z } from "zod";
 import { config, requireEnv } from "../config.js";
-import { getSupabase } from "../db.js";
-import { sendPasswordResetEmail, sendVerificationEmail } from "../services/email.js";
+import { createSupabaseAuthClient, getSupabase } from "../db.js";
 
 const router = Router();
 
@@ -37,7 +36,8 @@ const recognitionSchema = z.object({
 });
 
 const tokenSchema = z.object({
-  token: z.string().trim().min(16).max(256),
+  token: z.string().trim().min(16).max(4096),
+  refreshToken: z.string().trim().min(16).max(4096).optional(),
 });
 
 const forgotPasswordSchema = z.object({
@@ -49,7 +49,8 @@ const forgotPasswordSchema = z.object({
 });
 
 const resetPasswordSchema = forgotPasswordSchema.extend({
-  token: z.string().trim().min(16).max(256),
+  accessToken: z.string().trim().min(16).max(4096),
+  refreshToken: z.string().trim().min(16).max(4096),
   password: z.string().min(8).max(128),
 });
 
@@ -67,7 +68,6 @@ type ProfileRow = {
 
 type EmailAccountRow = {
   email: string;
-  password_hash: string;
   email_verified_at?: string | null;
   profiles: ProfileRow | null;
 };
@@ -86,29 +86,6 @@ function buildLoginMessage(walletAddress: string, nonce: string) {
     `Nonce: ${nonce}`,
     "This signature proves wallet ownership and does not authorize a transaction.",
   ].join("\n");
-}
-
-function createPasswordHash(password: string) {
-  const salt = randomBytes(16).toString("base64url");
-  const hash = scryptSync(password, salt, 64).toString("base64url");
-  return `scrypt:${salt}:${hash}`;
-}
-
-function verifyPassword(password: string, storedHash: string) {
-  const [algorithm, salt, hash] = storedHash.split(":");
-  if (algorithm !== "scrypt" || !salt || !hash) return false;
-
-  const expected = Buffer.from(hash, "base64url");
-  const actual = scryptSync(password, salt, expected.length);
-  return expected.length === actual.length && timingSafeEqual(expected, actual);
-}
-
-function createAuthToken() {
-  return randomBytes(32).toString("base64url");
-}
-
-function hashToken(token: string) {
-  return createHash("sha256").update(token).digest("base64url");
 }
 
 function getErrorMessage(error: unknown) {
@@ -213,70 +190,95 @@ function getOptionalSession(req: { headers: { authorization?: string } }) {
   }
 }
 
-router.post("/signup", async (req, res, next) => {
-  try {
-    const { email, password, fullName } = emailSignupSchema.parse(req.body);
-    const supabase = getSupabase();
+function authRedirect(path: string) {
+  return `${config.publicAppUrl.replace(/\/$/, "")}${path}`;
+}
 
-    const { data: existingAccount, error: existingError } = await supabase
-      .from("email_accounts")
-      .select("email")
-      .eq("email", email)
-      .maybeSingle();
+async function syncEmailProfile(email: string, fullName?: string | null, verifiedAt?: string | null) {
+  const supabase = getSupabase();
+  const walletAddress = `email:${email}`;
+  const { data: existingProfile, error: existingProfileError } = await supabase
+    .from("profiles")
+    .select("id, wallet_address, display_name, avatar_url")
+    .eq("wallet_address", walletAddress)
+    .maybeSingle();
 
-    if (existingError) throw existingError;
-    if (existingAccount) {
-      return res.status(409).json({ error: "An account already exists for this email." });
-    }
+  if (existingProfileError) throw existingProfileError;
 
-    const { data: profile, error: profileError } = await supabase
+  let profile = existingProfile as ProfileRow | null;
+
+  if (!profile) {
+    const { data, error } = await supabase
       .from("profiles")
       .insert({
-        wallet_address: `email:${email}`,
-        display_name: fullName,
+        wallet_address: walletAddress,
+        display_name: fullName || email.split("@")[0],
       })
       .select("id, wallet_address, display_name, avatar_url")
       .single();
 
-    if (profileError) throw profileError;
+    if (error) throw error;
+    profile = data as ProfileRow;
+  } else if (fullName && !profile.display_name) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ display_name: fullName, updated_at: new Date().toISOString() })
+      .eq("id", profile.id)
+      .select("id, wallet_address, display_name, avatar_url")
+      .single();
 
-    const userProfile = profile as ProfileRow;
-    const verificationToken = createAuthToken();
-    const { error: accountError } = await supabase.from("email_accounts").insert({
+    if (error) throw error;
+    profile = data as ProfileRow;
+  }
+
+  const now = new Date().toISOString();
+  const { error: accountError } = await supabase.from("email_accounts").upsert(
+    {
       email,
-      profile_id: userProfile.id,
-      password_hash: createPasswordHash(password),
+      profile_id: profile.id,
+      password_hash: "supabase-auth",
+      email_verified_at: verifiedAt ?? null,
+      updated_at: now,
+    },
+    { onConflict: "email" },
+  );
+
+  if (accountError) throw accountError;
+
+  return profile;
+}
+
+router.post("/signup", async (req, res, next) => {
+  try {
+    const { email, password, fullName } = emailSignupSchema.parse(req.body);
+    const auth = createSupabaseAuthClient();
+
+    const { data, error } = await auth.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: authRedirect(`/verify-email?email=${encodeURIComponent(email)}`),
+      },
     });
 
-    if (accountError) throw accountError;
+    if (error) {
+      const message = error.message || "Could not create Supabase account.";
+      const status = /already|registered|exists/i.test(message) ? 409 : 400;
+      return res.status(status).json({ error: message });
+    }
 
-    const { error: tokenError } = await supabase.from("email_verification_tokens").insert({
-      email,
-      token_hash: hashToken(verificationToken),
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    });
-
-    if (tokenError && isMissingSchemaError(tokenError)) {
+    const userProfile = await syncEmailProfile(email, fullName, data.user?.email_confirmed_at ?? null);
+    if (data.session) {
       const token = signProfileToken(userProfile, { email });
       await recordAuthRecognition(req, userProfile.id);
       return res.status(201).json({ token, profile: userProfile });
     }
 
-    if (tokenError) throwDbError(tokenError);
-
-    try {
-      await sendVerificationEmail(email, fullName, verificationToken);
-    } catch {
-      return res.status(502).json({
-        error:
-          "Account created, but the verification email could not be sent. Check Brevo SMTP settings and sender verification.",
-      });
-    }
-
     return res.status(201).json({
       needsVerification: true,
       email,
-      message: "Check your email to verify your account.",
+      message: "Check your email for the Supabase verification link.",
       profile: userProfile,
     });
   } catch (error) {
@@ -287,39 +289,22 @@ router.post("/signup", async (req, res, next) => {
 router.post("/verify-email", async (req, res, next) => {
   try {
     const { token } = tokenSchema.parse(req.body);
-    const tokenHash = hashToken(token);
-    const supabase = getSupabase();
+    const auth = createSupabaseAuthClient();
+    const { data, error } = await auth.auth.getUser(token);
 
-    const { data: tokenRow, error: tokenError } = await supabase
-      .from("email_verification_tokens")
-      .select("email, expires_at, used_at")
-      .eq("token_hash", tokenHash)
-      .maybeSingle();
-
-    if (tokenError) throw tokenError;
-    if (!tokenRow || tokenRow.used_at || new Date(String(tokenRow.expires_at)).getTime() < Date.now()) {
-      return res.status(400).json({ error: "Verification link is invalid or expired." });
+    if (error || !data.user?.email) {
+      return res.status(400).json({ error: error?.message || "Verification link is invalid or expired." });
     }
 
-    const verifiedAt = new Date().toISOString();
-    const { data: account, error: accountError } = await supabase
-      .from("email_accounts")
-      .update({ email_verified_at: verifiedAt, updated_at: verifiedAt })
-      .eq("email", String(tokenRow.email))
-      .select("email, profiles(id, wallet_address, display_name, avatar_url)")
-      .single();
-
-    if (accountError) throw accountError;
-
-    await supabase
-      .from("email_verification_tokens")
-      .update({ used_at: verifiedAt })
-      .eq("token_hash", tokenHash);
-
-    const profile = (account as { profiles: ProfileRow | null }).profiles;
-    if (!profile) return res.status(400).json({ error: "Account profile was not found." });
-
-    const sessionToken = signProfileToken(profile, { email: String(tokenRow.email) });
+    const email = data.user.email.toLowerCase();
+    const profile = await syncEmailProfile(
+      email,
+      typeof data.user.user_metadata?.full_name === "string"
+        ? data.user.user_metadata.full_name
+        : null,
+      data.user.email_confirmed_at ?? new Date().toISOString(),
+    );
+    const sessionToken = signProfileToken(profile, { email });
     await recordAuthRecognition(req, profile.id);
     return res.json({ token: sessionToken, profile });
   } catch (error) {
@@ -357,42 +342,25 @@ router.post("/recognition", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   try {
     const { email, password } = emailAuthSchema.parse(req.body);
-    const supabase = getSupabase();
+    const auth = createSupabaseAuthClient();
 
-    let { data: account, error } = await supabase
-      .from("email_accounts")
-      .select("email, password_hash, email_verified_at, profiles(id, wallet_address, display_name, avatar_url)")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (error && isMissingSchemaError(error)) {
-      const fallback = await supabase
-        .from("email_accounts")
-        .select("email, password_hash, profiles(id, wallet_address, display_name, avatar_url)")
-        .eq("email", email)
-        .maybeSingle();
-      account = fallback.data;
-      error = fallback.error;
+    const { data, error } = await auth.auth.signInWithPassword({ email, password });
+    if (error || !data.user?.email) {
+      const message = error?.message || "Invalid email or password.";
+      const status = /confirm|verified/i.test(message) ? 403 : 401;
+      return res.status(status).json({ error: message });
     }
 
-    if (error) throwDbError(error);
-
-    const emailAccount = account as EmailAccountRow | null;
-    if (
-      !emailAccount ||
-      !emailAccount.profiles ||
-      !verifyPassword(password, emailAccount.password_hash)
-    ) {
-      return res.status(401).json({ error: "Invalid email or password." });
-    }
-
-    if ("email_verified_at" in emailAccount && !emailAccount.email_verified_at) {
-      return res.status(403).json({ error: "Please verify your email before logging in." });
-    }
-
-    const token = signProfileToken(emailAccount.profiles, { email });
-    await recordAuthRecognition(req, emailAccount.profiles.id);
-    return res.json({ token, profile: emailAccount.profiles });
+    const profile = await syncEmailProfile(
+      email,
+      typeof data.user.user_metadata?.full_name === "string"
+        ? data.user.user_metadata.full_name
+        : null,
+      data.user.email_confirmed_at ?? new Date().toISOString(),
+    );
+    const token = signProfileToken(profile, { email });
+    await recordAuthRecognition(req, profile.id);
+    return res.json({ token, profile });
   } catch (error) {
     next(error);
   }
@@ -401,30 +369,17 @@ router.post("/login", async (req, res, next) => {
 router.post("/forgot-password", async (req, res, next) => {
   try {
     const { email } = forgotPasswordSchema.parse(req.body);
-    const supabase = getSupabase();
+    const auth = createSupabaseAuthClient();
+    const { error } = await auth.auth.resetPasswordForEmail(email, {
+      redirectTo: authRedirect(`/reset-password?email=${encodeURIComponent(email)}`),
+    });
 
-    const { data: account, error } = await supabase
-      .from("email_accounts")
-      .select("email")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    if (account) {
-      const resetToken = createAuthToken();
-      const { error: tokenError } = await supabase.from("password_reset_tokens").insert({
-        email,
-        token_hash: hashToken(resetToken),
-        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      });
-
-      if (tokenError) throw tokenError;
-      await sendPasswordResetEmail(email, resetToken);
+    if (error) {
+      return res.status(400).json({ error: error.message });
     }
 
     return res.json({
-      message: "If an account exists for that email, a reset link has been sent.",
+      message: "If an account exists for that email, Supabase has sent a reset link.",
     });
   } catch (error) {
     next(error);
@@ -433,41 +388,22 @@ router.post("/forgot-password", async (req, res, next) => {
 
 router.post("/reset-password", async (req, res, next) => {
   try {
-    const { email, token, password } = resetPasswordSchema.parse(req.body);
-    const tokenHash = hashToken(token);
-    const supabase = getSupabase();
+    const { email, accessToken, refreshToken, password } = resetPasswordSchema.parse(req.body);
+    const auth = createSupabaseAuthClient();
+    const { error: sessionError } = await auth.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (sessionError) return res.status(400).json({ error: sessionError.message });
 
-    const { data: tokenRow, error: tokenError } = await supabase
-      .from("password_reset_tokens")
-      .select("email, expires_at, used_at")
-      .eq("token_hash", tokenHash)
-      .eq("email", email)
-      .maybeSingle();
+    const { data, error } = await auth.auth.updateUser({ password });
 
-    if (tokenError) throw tokenError;
-    if (!tokenRow || tokenRow.used_at || new Date(String(tokenRow.expires_at)).getTime() < Date.now()) {
-      return res.status(400).json({ error: "Reset link is invalid or expired." });
+    if (error || !data.user?.email) {
+      return res.status(400).json({ error: error?.message || "Reset link is invalid or expired." });
     }
 
-    const now = new Date().toISOString();
-    const { data: account, error: accountError } = await supabase
-      .from("email_accounts")
-      .update({
-        password_hash: createPasswordHash(password),
-        email_verified_at: now,
-        updated_at: now,
-      })
-      .eq("email", email)
-      .select("email, profiles(id, wallet_address, display_name, avatar_url)")
-      .single();
-
-    if (accountError) throw accountError;
-
-    await supabase.from("password_reset_tokens").update({ used_at: now }).eq("token_hash", tokenHash);
-
-    const profile = (account as { profiles: ProfileRow | null }).profiles;
-    if (!profile) return res.status(400).json({ error: "Account profile was not found." });
-
+    const verifiedAt = data.user.email_confirmed_at ?? new Date().toISOString();
+    const profile = await syncEmailProfile(email, null, verifiedAt);
     const sessionToken = signProfileToken(profile, { email });
     await recordAuthRecognition(req, profile.id);
     return res.json({ token: sessionToken, profile });

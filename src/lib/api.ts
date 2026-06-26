@@ -186,7 +186,7 @@ export type PortfolioSummary = {
 };
 
 export const DEFAULT_PROMO_BANNER: PromoBanner = {
-  greeting: "Hello Jeremy.",
+  greeting: "Hello Collector.",
   message: "Get free delivery every $20 purchase",
   ctaLabel: "Learn More",
   detailsTitle: "Free delivery on $20 purchases",
@@ -322,10 +322,10 @@ export function loginWithEmail(payload: { email: string; password: string }) {
   });
 }
 
-export function verifyEmailToken(token: string) {
+export function verifyEmailToken(token: string, refreshToken?: string) {
   return request<VerifyResponse>("/api/auth/verify-email", {
     method: "POST",
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token, refreshToken }),
   });
 }
 
@@ -336,7 +336,12 @@ export function requestPasswordReset(email: string) {
   });
 }
 
-export function resetPassword(payload: { email: string; token: string; password: string }) {
+export function resetPassword(payload: {
+  email: string;
+  accessToken: string;
+  refreshToken: string;
+  password: string;
+}) {
   return request<VerifyResponse>("/api/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(payload),

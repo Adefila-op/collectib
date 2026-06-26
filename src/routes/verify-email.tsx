@@ -20,11 +20,14 @@ function Verify() {
   const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("token");
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const query = new URLSearchParams(window.location.search);
+    const token = hash.get("access_token") ?? query.get("token");
+    const refreshToken = hash.get("refresh_token") ?? undefined;
     if (!token) return;
 
     setStatus("Verifying your email...");
-    verifyEmailToken(token)
+    verifyEmailToken(token, refreshToken)
       .then((response) => {
         saveSession(response.token, response.profile.wallet_address);
         setIsVerified(true);

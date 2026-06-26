@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { ArtworkCard, SectionHeader } from "@/components/art-ui";
 import {
@@ -20,6 +20,8 @@ export const Route = createFileRoute("/home")({
 function Home() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [promoBanner, setPromoBanner] = useState<PromoBanner>(DEFAULT_PROMO_BANNER);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [memberName, setMemberName] = useState("");
   const [status, setStatus] = useState("Loading listings...");
 
   useEffect(() => {
@@ -40,13 +42,39 @@ function Home() {
       .then(({ profile }) => {
         const name = (profile.display_name || profile.email || "").trim();
         if (!name) return;
-        setPromoBanner((banner) => ({
-          ...banner,
-          greeting: `Hello ${name.split(/\s+/)[0]}.`,
-        }));
+        setMemberName(name.split(/\s+/)[0]);
       })
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setActiveSlide((current) => (current + 1) % 2), 4500);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const promoSlides = useMemo(
+    () => [
+      {
+        ...promoBanner,
+        greeting: memberName ? `Hello ${memberName}.` : promoBanner.greeting,
+        to: "/free-delivery" as const,
+        theme: "delivery",
+      },
+      {
+        greeting: "Affiliate Network",
+        message: "Join our affiliate network and earn up to 200k annually.",
+        ctaLabel: "Join Now",
+        detailsTitle: "Collectibles affiliate network",
+        detailsBody:
+          "Earn rewards by introducing collectors, artists, and galleries to Collectibles.",
+        to: "/invite" as const,
+        theme: "affiliate",
+      },
+    ],
+    [memberName, promoBanner],
+  );
+  const currentPromo = promoSlides[activeSlide % promoSlides.length];
 
   return (
     <MobileShell>
@@ -74,8 +102,10 @@ function Home() {
       </Link>
 
       <Link
-        to="/free-delivery"
-        className="relative mx-5 mt-5 block min-h-[114px] overflow-hidden rounded-2xl bg-[#FFF0C9] px-4 py-4"
+        to={currentPromo.to}
+        className={`relative mx-5 mt-5 block min-h-[114px] overflow-hidden rounded-2xl px-4 py-4 ${
+          currentPromo.theme === "affiliate" ? "bg-[#E8F4EA]" : "bg-[#FFF0C9]"
+        }`}
       >
         <div className="absolute -right-7 -top-7 h-20 w-20 rounded-full border-[18px] border-[#17B869]" />
         <div className="absolute -right-4 bottom-2 h-16 w-16 rounded-full border-[16px] border-[#18A9C7]" />
@@ -90,12 +120,22 @@ function Home() {
             <div className="absolute bottom-11 left-4 h-4 w-5 rounded-sm bg-[#F6C04D]" />
           </div>
           <div>
-            <p className="text-sm font-extrabold text-foreground">{promoBanner.greeting}</p>
-            <p className="mt-1 text-xs font-medium text-foreground/65">{promoBanner.message}</p>
+            <p className="text-sm font-extrabold text-foreground">{currentPromo.greeting}</p>
+            <p className="mt-1 text-xs font-medium text-foreground/65">{currentPromo.message}</p>
             <span className="mt-3 inline-flex rounded-full bg-[#F6A51D] px-4 py-2 text-xs font-bold text-white shadow-sm">
-              {promoBanner.ctaLabel}
+              {currentPromo.ctaLabel}
             </span>
           </div>
+        </div>
+        <div className="absolute bottom-2 right-4 z-10 flex gap-1">
+          {promoSlides.map((slide, index) => (
+            <span
+              key={slide.to}
+              className={`h-1.5 rounded-full transition-all ${
+                index === activeSlide ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25"
+              }`}
+            />
+          ))}
         </div>
       </Link>
 
