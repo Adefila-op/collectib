@@ -43,7 +43,15 @@ function Artists() {
             params={{ id: artist.id }}
             className="flex items-center gap-3 rounded-2xl bg-surface border border-border p-3"
           >
-            <ArtistMark index={index} />
+            {artist.avatarUrl ? (
+              <img
+                src={artist.avatarUrl}
+                alt=""
+                className="w-14 h-14 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <ArtistMark index={index} />
+            )}
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm truncate">{artist.name}</p>
               <p className="text-xs text-muted-foreground truncate">

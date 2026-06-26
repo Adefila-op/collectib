@@ -39,7 +39,11 @@ function ArtistRoute() {
         <>
           <div className="px-5 text-center">
             <div className="w-24 h-24 mx-auto rounded-full bg-accent overflow-hidden">
-              <ArtistPortrait />
+              {artist.avatarUrl ? (
+                <img src={artist.avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <ArtistPortrait />
+              )}
             </div>
             <h1 className="text-2xl font-extrabold mt-3">{artist.name}</h1>
             <p className="text-sm text-muted-foreground mt-1">
