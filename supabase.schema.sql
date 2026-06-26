@@ -190,6 +190,18 @@ create table if not exists service_pings (
   created_at timestamptz not null default now()
 );
 
+do $$
+begin
+  if to_regclass('storage.buckets') is not null then
+    execute $storage_bucket$
+      insert into storage.buckets (id, name, public)
+      values ('collectibles', 'collectibles', true)
+      on conflict (id) do update
+      set public = excluded.public
+    $storage_bucket$;
+  end if;
+end $$;
+
 create index if not exists artworks_status_created_idx on artworks(status, created_at desc);
 create index if not exists offers_buyer_idx on offers(buyer_profile_id, created_at desc);
 create index if not exists offers_seller_idx on offers(seller_profile_id, created_at desc);

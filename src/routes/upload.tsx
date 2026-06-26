@@ -37,7 +37,7 @@ function Upload() {
         </div>
       </div>
       <div className="fixed bottom-0 inset-x-0 max-w-[440px] mx-auto bg-surface border-t border-border p-4">
-        <PrimaryButton to="/sell">Publish Artwork</PrimaryButton>
+        <PrimaryButton to="/sell/create">Create Listing</PrimaryButton>
       </div>
     </div>
   );

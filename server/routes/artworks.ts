@@ -17,6 +17,21 @@ const artworkSchema = z.object({
   imageUrl: z.string().url().optional(),
 });
 
+const imageUploadSchema = z.object({
+  fileName: z.string().min(1).max(180),
+  contentType: z.string().min(1),
+  data: z.string().min(1),
+});
+
+function sanitizeFileName(fileName: string) {
+  const normalized = fileName
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized || "artwork-image";
+}
+
 router.get("/", async (req, res, next) => {
   try {
     const status = typeof req.query.status === "string" ? req.query.status : "listed";
@@ -30,6 +45,42 @@ router.get("/", async (req, res, next) => {
     if (error) throw error;
 
     return res.json({ artworks: data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/upload-image", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const payload = imageUploadSchema.parse(req.body);
+
+    if (!payload.contentType.startsWith("image/")) {
+      return res.status(400).json({ error: "Only image uploads are supported." });
+    }
+
+    const base64 = payload.data.includes(",") ? payload.data.split(",").pop() : payload.data;
+    const buffer = Buffer.from(base64 ?? "", "base64");
+
+    if (!buffer.length) {
+      return res.status(400).json({ error: "The uploaded image could not be read." });
+    }
+
+    if (buffer.byteLength > 7 * 1024 * 1024) {
+      return res.status(413).json({ error: "Images must be smaller than 7 MB." });
+    }
+
+    const safeName = sanitizeFileName(payload.fileName);
+    const path = `artworks/${req.user?.sub}/${Date.now()}-${safeName}`;
+    const supabase = getSupabase();
+    const { error } = await supabase.storage
+      .from("collectibles")
+      .upload(path, buffer, { contentType: payload.contentType, upsert: false });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage.from("collectibles").getPublicUrl(path);
+
+    return res.status(201).json({ path, imageUrl: data.publicUrl });
   } catch (error) {
     next(error);
   }

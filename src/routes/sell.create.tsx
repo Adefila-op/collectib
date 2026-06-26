@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton } from "@/components/art-ui";
-import { createArtwork } from "@/lib/api";
+import { createArtwork, uploadArtworkImage } from "@/lib/api";
 
 export const Route = createFileRoute("/sell/create")({
   component: Create,
@@ -17,14 +17,25 @@ function Create() {
   const [tokenMint, setTokenMint] = useState("");
   const [metadataUri, setMetadataUri] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [status, setStatus] = useState("");
   const [isBusy, setIsBusy] = useState(false);
+
+  const selectImage = (file: File | null) => {
+    setImageFile(file);
+    setPreviewUrl(file ? URL.createObjectURL(file) : "");
+  };
 
   const submit = async () => {
     if (isBusy) return;
     setIsBusy(true);
     setStatus("");
     try {
+      setStatus(imageFile ? "Uploading artwork image..." : "Creating listing...");
+      const uploaded = imageFile ? await uploadArtworkImage(imageFile) : null;
+      const finalImageUrl = uploaded?.imageUrl || imageUrl || undefined;
+      setStatus("Saving artwork details...");
       const created = await createArtwork({
         title,
         description: description || undefined,
@@ -32,7 +43,7 @@ function Create() {
         priceCurrency,
         tokenMint: tokenMint || undefined,
         metadataUri: metadataUri || undefined,
-        imageUrl: imageUrl || undefined,
+        imageUrl: finalImageUrl,
       });
       navigate({ to: "/artwork/$id", params: { id: created.artwork.id } });
     } catch (error) {
@@ -48,8 +59,8 @@ function Create() {
       <TopBar title="Create Listing" />
       <div className="px-5">
         <div className="rounded-3xl overflow-hidden aspect-square bg-muted">
-          {imageUrl ? (
-            <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+          {previewUrl || imageUrl ? (
+            <img src={previewUrl || imageUrl} alt="" className="w-full h-full object-cover" />
           ) : (
             <BlobArt variant={1} className="w-full h-full" />
           )}
@@ -84,6 +95,15 @@ function Create() {
             onChange={setImageUrl}
             placeholder="https://..."
           />
+          <label className="block rounded-2xl bg-secondary px-4 py-3">
+            <p className="text-[11px] text-muted-foreground">Upload image</p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => selectImage(event.target.files?.[0] ?? null)}
+              className="mt-2 w-full text-xs font-medium"
+            />
+          </label>
           <Field label="Token mint" value={tokenMint} onChange={setTokenMint} />
           <Field label="Metadata URI" value={metadataUri} onChange={setMetadataUri} />
         </div>

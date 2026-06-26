@@ -6,6 +6,7 @@ import {
   DEFAULT_PROMO_BANNER,
   getArtworks,
   getHomePromoBanner,
+  getMe,
   type Artwork,
   type PromoBanner,
 } from "@/lib/api";
@@ -34,6 +35,17 @@ function Home() {
     getHomePromoBanner()
       .then((response) => setPromoBanner(response.banner))
       .catch(() => setPromoBanner(DEFAULT_PROMO_BANNER));
+
+    getMe()
+      .then(({ profile }) => {
+        const name = (profile.display_name || profile.email || "").trim();
+        if (!name) return;
+        setPromoBanner((banner) => ({
+          ...banner,
+          greeting: `Hello ${name.split(/\s+/)[0]}.`,
+        }));
+      })
+      .catch(() => undefined);
   }, []);
 
   return (
@@ -63,7 +75,7 @@ function Home() {
 
       <Link
         to="/free-delivery"
-        className="relative mx-5 mt-5 block min-h-28 overflow-hidden rounded-2xl bg-[#FFF0C9] px-4 py-4"
+        className="relative mx-5 mt-5 block min-h-[114px] overflow-hidden rounded-2xl bg-[#FFF0C9] px-4 py-4"
       >
         <div className="absolute -right-7 -top-7 h-20 w-20 rounded-full border-[18px] border-[#17B869]" />
         <div className="absolute -right-4 bottom-2 h-16 w-16 rounded-full border-[16px] border-[#18A9C7]" />

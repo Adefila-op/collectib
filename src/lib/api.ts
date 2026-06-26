@@ -390,6 +390,28 @@ export function createArtwork(payload: {
   });
 }
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Could not read image file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadArtworkImage(file: File) {
+  const data = await readFileAsDataUrl(file);
+
+  return request<{ path: string; imageUrl: string }>("/api/artworks/upload-image", {
+    method: "POST",
+    body: JSON.stringify({
+      fileName: file.name,
+      contentType: file.type || "application/octet-stream",
+      data,
+    }),
+  });
+}
+
 export function getOffers() {
   return request<{ offers: Offer[] }>("/api/offers");
 }
