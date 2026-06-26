@@ -1,5 +1,4 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton } from "@/components/art-ui";
 
 export const Route = createFileRoute("/auction/$id")({
@@ -10,9 +9,6 @@ function Auction() {
   const router = useRouter();
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white pb-28">
-      <div className="px-5 pt-3">
-        <span className="text-xs font-semibold">9:41</span>
-      </div>
       <div className="flex items-center px-5 py-3">
         <button
           onClick={() => router.history.back()}

@@ -266,10 +266,11 @@ router.post("/signup", async (req, res, next) => {
 
     try {
       await sendVerificationEmail(email, fullName, verificationToken);
-    } catch (error) {
-      const token = signProfileToken(userProfile, { email });
-      await recordAuthRecognition(req, userProfile.id);
-      return res.status(201).json({ token, profile: userProfile });
+    } catch {
+      return res.status(502).json({
+        error:
+          "Account created, but the verification email could not be sent. Check Brevo SMTP settings and sender verification.",
+      });
     }
 
     return res.status(201).json({

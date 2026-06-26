@@ -6,7 +6,9 @@ import {
   getAuthToken,
   getWalletAddress,
   getWalletOverview,
+  getWalletTransactions,
   type WalletOverview,
+  type WalletTransaction,
 } from "@/lib/api";
 import { shortWalletAddress } from "@/lib/solana-wallet";
 
@@ -36,6 +38,7 @@ function Wallet() {
   const [walletAddress, setWalletAddress] = useState(() => getWalletAddress() ?? "");
   const [overview, setOverview] = useState<WalletOverview | null>(null);
   const [assets, setAssets] = useState<WalletAsset[]>([]);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,11 +49,12 @@ function Wallet() {
     setIsLoading(true);
     setStatus("");
 
-    getWalletOverview(walletAddress)
-      .then((response) => {
+    Promise.all([getWalletOverview(walletAddress), getWalletTransactions(walletAddress, 5)])
+      .then(([response, transactionResponse]) => {
         if (!isMounted) return;
         setOverview(response);
         setAssets(response.assets as WalletAsset[]);
+        setTransactions(transactionResponse.signatures);
         setStatus(response.assets.length ? "" : "No NFTs found for this wallet.");
       })
       .catch((error) => {
@@ -71,6 +75,7 @@ function Wallet() {
     setWalletAddress("");
     setOverview(null);
     setAssets([]);
+    setTransactions([]);
     setStatus("Wallet disconnected");
   };
 
@@ -88,7 +93,10 @@ function Wallet() {
           <div className="mt-4 rounded-2xl bg-white/10 p-3">
             <p className="text-xs opacity-75">Live SOL balance</p>
             <p className="text-3xl font-extrabold mt-1">
-              {overview ? overview.solBalance.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "--"} SOL
+              {overview
+                ? overview.solBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                : "--"}{" "}
+              SOL
             </p>
             {overview?.checkedAt && (
               <p className="text-[11px] opacity-70 mt-1">
@@ -115,6 +123,37 @@ function Wallet() {
           )}
         </div>
       </div>
+
+      {walletAddress && (
+        <>
+          <h2 className="px-5 mt-6 font-semibold">Recent Activity</h2>
+          <div className="mx-5 mt-3 rounded-2xl bg-surface border border-border divide-y divide-border overflow-hidden">
+            {isLoading && <p className="p-4 text-sm text-muted-foreground">Loading activity...</p>}
+            {!isLoading && transactions.length === 0 && (
+              <p className="p-4 text-sm text-muted-foreground">No recent transactions found.</p>
+            )}
+            {!isLoading &&
+              transactions.map((transaction) => (
+                <a
+                  key={transaction.signature}
+                  href={`https://solscan.io/tx/${transaction.signature}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block p-4"
+                >
+                  <p className="font-mono text-xs font-semibold">
+                    {shortWalletAddress(transaction.signature)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {transaction.blockTime
+                      ? new Date(transaction.blockTime * 1000).toLocaleString()
+                      : "Recent Solana transaction"}
+                  </p>
+                </a>
+              ))}
+          </div>
+        </>
+      )}
 
       <h2 className="px-5 mt-6 font-semibold">Wallet Assets</h2>
       <div className="mx-5 mt-3 rounded-2xl bg-surface border border-border divide-y divide-border overflow-hidden">

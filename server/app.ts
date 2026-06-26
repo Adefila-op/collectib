@@ -11,6 +11,7 @@ import webhookRoutes from "./routes/webhooks.js";
 import cronRoutes from "./routes/cron.js";
 import adminRoutes from "./routes/admin.js";
 import promoRoutes from "./routes/promos.js";
+import meRoutes from "./routes/me.js";
 
 export const app = express();
 
@@ -40,6 +41,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/me", meRoutes);
 app.use("/api/artworks", artworkRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/orders", orderRoutes);

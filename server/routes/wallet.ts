@@ -56,7 +56,7 @@ async function heliusRpc<T>(method: string, params: unknown) {
     throw new Error(`Helius request failed: ${JSON.stringify(body.error ?? body)}`);
   }
 
-  if (!body.result) {
+  if (body.result === undefined) {
     throw new Error("Helius request returned no result.");
   }
 
@@ -82,14 +82,43 @@ router.get("/:address/overview", requireAuth, async (req: AuthedRequest, res, ne
       }),
     ]);
 
-    return res.json({
+    const overview = {
       walletAddress: address,
       lamports: balance.value,
       solBalance: balance.value / 1_000_000_000,
       assets: assetsResult.items ?? [],
       pagination: assetsResult,
       checkedAt: new Date().toISOString(),
-    });
+    };
+
+    await getSupabase()
+      .from("connected_wallets")
+      .update({ holdings_snapshot: overview, last_connected_at: overview.checkedAt })
+      .eq("wallet_address", address);
+
+    return res.json(overview);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/:address/transactions", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const address = z.string().min(32).max(64).parse(req.params.address);
+    if (!(await assertWalletAccess(req, res, address))) return;
+
+    const limit = Math.min(Math.max(1, Number(req.query.limit ?? 20) || 20), 50);
+    const signatures = await heliusRpc<
+      Array<{
+        signature: string;
+        slot?: number;
+        blockTime?: number | null;
+        err?: unknown;
+        memo?: string | null;
+      }>
+    >("getSignaturesForAddress", [address, { limit }]);
+
+    return res.json({ signatures });
   } catch (error) {
     next(error);
   }

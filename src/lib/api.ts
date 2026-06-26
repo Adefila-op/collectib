@@ -117,6 +117,29 @@ export type PromoBanner = {
   updatedAt?: string;
 };
 
+export type MeProfile = AuthProfile & {
+  email?: string | null;
+  artist_id?: string | null;
+  created_at?: string | null;
+  stats: {
+    connectedWallets: number;
+    offers: number;
+    orders: number;
+  };
+};
+
+export type ActivityItem = {
+  id: string;
+  type: "offer" | "order";
+  title: string;
+  subject: string;
+  value: string;
+  status: string;
+  imageUrl?: string | null;
+  createdAt?: string;
+  time: string;
+};
+
 export const DEFAULT_PROMO_BANNER: PromoBanner = {
   greeting: "Hello Jeremy.",
   message: "Get free delivery every $20 purchase",
@@ -293,6 +316,14 @@ export function getWalletTransactions(walletAddress: string, limit = 20) {
 
 export function getHealth() {
   return request<{ ok: boolean; service: string; checkedAt: string }>("/api/health");
+}
+
+export function getMe() {
+  return request<{ profile: MeProfile }>("/api/me");
+}
+
+export function getActivity() {
+  return request<{ activities: ActivityItem[] }>("/api/me/activity");
 }
 
 export function getHomePromoBanner() {

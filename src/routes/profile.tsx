@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
+import { clearSession, getMe, type MeProfile } from "@/lib/api";
 import type { FileRouteTypes } from "@/routeTree.gen";
 import {
   Activity,
@@ -21,6 +23,33 @@ export const Route = createFileRoute("/profile")({
 });
 
 function Profile() {
+  const [profile, setProfile] = useState<MeProfile | null>(null);
+  const [status, setStatus] = useState("Loading profile...");
+
+  useEffect(() => {
+    getMe()
+      .then((response) => {
+        setProfile(response.profile);
+        setStatus("");
+      })
+      .catch((error) => {
+        setStatus(error instanceof Error ? error.message : "Could not load profile.");
+      });
+  }, []);
+
+  const displayName = profile?.display_name || "Collector";
+  const subtitle = profile?.email || profile?.wallet_address || "Signed in";
+  const initials = useMemo(
+    () =>
+      displayName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join("") || "C",
+    [displayName],
+  );
+
   type ProfileItem = {
     label: string;
     Icon: LucideIcon;
@@ -33,20 +62,26 @@ function Profile() {
       label: "Collecting",
       items: [
         { label: "Saved items", Icon: FolderHeart, to: "/saved", meta: "watchlist + favorites" },
-        { label: "Bids & offers", Icon: HandCoins, to: "/offers" },
-        { label: "Transactions", Icon: Activity, to: "/transactions" },
+        { label: "Bids & offers", Icon: HandCoins, to: "/offers", meta: `${profile?.stats.offers ?? 0}` },
+        { label: "Transactions", Icon: Activity, to: "/transactions", meta: `${profile?.stats.orders ?? 0}` },
       ],
     },
     {
       label: "Holdings",
-      items: [{ label: "Holdings", Icon: ShieldCheck, to: "/holdings", meta: "wallet + vault" }],
+      items: [
+        {
+          label: "Holdings",
+          Icon: ShieldCheck,
+          to: "/holdings",
+          meta: `${profile?.stats.connectedWallets ?? 0} wallets`,
+        },
+      ],
     },
     {
       label: "Artist",
-      items: [
-        { label: "My Artist Profile", Icon: Brush, to: "/artist/$id", params: { id: "1" } },
-        { label: "Apply as Artist", Icon: UserPlus, to: "/apply-artist" },
-      ],
+      items: profile?.artist_id
+        ? [{ label: "My Artist Profile", Icon: Brush, to: "/artist/$id", params: { id: profile.artist_id } }]
+        : [{ label: "Apply as Artist", Icon: UserPlus, to: "/apply-artist" }],
     },
     {
       label: "Account",
@@ -62,13 +97,18 @@ function Profile() {
     <MobileShell>
       <div className="mx-5 mt-3 rounded-3xl bg-primary-softer p-5 flex items-center gap-3">
         <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
-          TB
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+          ) : (
+            initials
+          )}
         </div>
         <div>
-          <p className="font-bold">Tima Bouzid</p>
-          <p className="text-xs text-foreground/60">Signed in</p>
+          <p className="font-bold">{displayName}</p>
+          <p className="text-xs text-foreground/60 break-all">{subtitle}</p>
         </div>
       </div>
+      {status && <p className="px-5 mt-3 text-sm text-muted-foreground">{status}</p>}
       <div className="px-5 mt-5 space-y-5">
         {groups.map((group) => (
           <section key={group.label}>
@@ -96,6 +136,7 @@ function Profile() {
         ))}
         <Link
           to="/"
+          onClick={() => clearSession()}
           className="flex items-center justify-center gap-2 rounded-2xl bg-destructive/10 px-3 py-3 text-sm font-bold text-destructive"
         >
           <LogOut size={17} />
