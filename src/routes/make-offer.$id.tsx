@@ -67,10 +67,17 @@ function MakeOffer() {
               <div>
                 <p className="font-semibold text-sm">{artwork.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  List price {formatMoney(artwork.price_amount, artwork.price_currency)}
+                  {artwork.status === "owned" ? "Owner guide value" : "List price"}{" "}
+                  {formatMoney(artwork.price_amount, artwork.price_currency)}
                 </p>
               </div>
             </div>
+            {artwork.status === "owned" && (
+              <p className="mt-3 rounded-2xl bg-primary-softer p-3 text-xs font-medium text-primary">
+                This is an admin-owned physical artwork. It is not available for direct checkout;
+                submit an offer for owner review.
+              </p>
+            )}
             <div className="mt-6 rounded-3xl bg-primary-softer p-5 text-center">
               <p className="text-xs text-muted-foreground">Your offer</p>
               <p className="text-4xl font-extrabold text-primary mt-2">

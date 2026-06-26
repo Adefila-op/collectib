@@ -76,6 +76,11 @@ create table if not exists artists (
   name text not null,
   bio text,
   avatar_url text,
+  slug text unique,
+  location text,
+  practice text,
+  collection_title text,
+  is_featured boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -241,9 +246,162 @@ end $$;
 
 do $$
 begin
+  alter table artists
+    add column slug text unique;
+exception
+  when duplicate_column then null;
+end $$;
+
+do $$
+begin
+  alter table artists
+    add column location text;
+exception
+  when duplicate_column then null;
+end $$;
+
+do $$
+begin
+  alter table artists
+    add column practice text;
+exception
+  when duplicate_column then null;
+end $$;
+
+do $$
+begin
+  alter table artists
+    add column collection_title text;
+exception
+  when duplicate_column then null;
+end $$;
+
+do $$
+begin
+  alter table artists
+    add column is_featured boolean not null default false;
+exception
+  when duplicate_column then null;
+end $$;
+
+create unique index if not exists artists_slug_idx on artists(slug);
+create index if not exists artists_featured_idx on artists(is_featured, created_at desc);
+
+do $$
+begin
+  alter table artworks
+    drop constraint if exists artworks_status_check;
   alter table artworks
     add constraint artworks_status_check
-    check (status in ('draft', 'listed', 'reserved', 'sold', 'delisted'));
+    check (status in ('draft', 'listed', 'owned', 'reserved', 'sold', 'delisted'));
+end $$;
+
+insert into profiles (id, wallet_address, display_name)
+values
+  ('00000000-0000-4000-8000-000000000001', 'admin-owned-real-assets', 'Collectibles Admin')
+on conflict (wallet_address) do update
+set display_name = excluded.display_name,
+    updated_at = now();
+
+insert into artists (id, profile_id, name, slug, location, practice, collection_title, bio, is_featured)
+values
+  (
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000001',
+    'Slawn',
+    'slawn',
+    'Lagos / London',
+    'Painting, street culture, sculpture',
+    'Admin-owned Slawn Collection',
+    'Featured admin collection for Slawn. Assets here represent physical inventory held by the platform and accept collector offers only.',
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000000102',
+    '00000000-0000-4000-8000-000000000001',
+    'Amoako Boafo',
+    'amoako-boafo',
+    'Accra / Vienna',
+    'Figurative painting',
+    'Admin-owned Amoako Boafo Collection',
+    'Featured admin collection for Amoako Boafo. Assets here represent physical inventory held by the platform and accept collector offers only.',
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000000103',
+    '00000000-0000-4000-8000-000000000001',
+    'Ken Nwadiogbu',
+    'ken-nwadiogbu',
+    'Lagos / London',
+    'Contemporary drawing, painting, mixed media',
+    'Admin-owned Ken Nwadiogbu Collection',
+    'Featured admin collection for Ken Nwadiogbu. Assets here represent physical inventory held by the platform and accept collector offers only.',
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000000104',
+    '00000000-0000-4000-8000-000000000001',
+    'Silas Onoja',
+    'silas-onoja',
+    'Nigeria',
+    'Realism and contemporary portraiture',
+    'Admin-owned Silas Onoja Collection',
+    'Featured admin collection for Silas Onoja. Assets here represent physical inventory held by the platform and accept collector offers only.',
+    true
+  )
+on conflict (id) do update
+set name = excluded.name,
+    slug = excluded.slug,
+    location = excluded.location,
+    practice = excluded.practice,
+    collection_title = excluded.collection_title,
+    bio = excluded.bio,
+    is_featured = excluded.is_featured;
+
+insert into artworks (
+  id,
+  seller_profile_id,
+  artist_id,
+  title,
+  description,
+  price_amount,
+  price_currency,
+  status
+)
+values
+  ('00000000-0000-4000-8000-000000000201', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000101', 'Bobo in Blue', 'Admin-owned physical Slawn artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 120000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000202', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000101', 'London Blindness', 'Admin-owned physical Slawn artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 115000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000203', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000101', 'Moses', 'Admin-owned physical Slawn artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 132000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000204', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000101', 'Nigeria, My Country', 'Admin-owned physical Slawn artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 128000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000205', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000101', 'Hot Head', 'Admin-owned physical Slawn artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 98000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000206', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000102', 'The Lemon Bathing Suit', 'Admin-owned physical Amoako Boafo artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 280000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000207', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000102', 'Pink Suit Portrait', 'Admin-owned physical Amoako Boafo artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 245000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000208', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000102', 'Yellow Dress', 'Admin-owned physical Amoako Boafo artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 260000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000209', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000102', 'Black Diaspora Series', 'Admin-owned physical Amoako Boafo artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 310000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000210', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000102', 'CACTUS', 'Admin-owned physical Amoako Boafo artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 225000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000211', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000103', 'Journey Mercies', 'Admin-owned physical Ken Nwadiogbu artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 65000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000212', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000103', 'The Migrant', 'Admin-owned physical Ken Nwadiogbu artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 72000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000213', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000103', 'Packages in Brown Skin', 'Admin-owned physical Ken Nwadiogbu artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 78000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000214', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000103', 'Reflection Series', 'Admin-owned physical Ken Nwadiogbu artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 69000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000215', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000103', 'Contemporealism Series', 'Admin-owned physical Ken Nwadiogbu artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 84000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000216', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000104', 'Homecoming', 'Admin-owned physical Silas Onoja artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 42000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000217', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000104', 'Shared Stories', 'Admin-owned physical Silas Onoja artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 38000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000218', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000104', 'Morning Light', 'Admin-owned physical Silas Onoja artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 45000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000219', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000104', 'The Conversation', 'Admin-owned physical Silas Onoja artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 47000, 'USD', 'owned'),
+  ('00000000-0000-4000-8000-000000000220', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000104', 'New Beginnings', 'Admin-owned physical Silas Onoja artwork asset. This is a real-world collection record, not a chain-only mint, and collectors can submit offers only.', 40000, 'USD', 'owned')
+on conflict (id) do update
+set title = excluded.title,
+    description = excluded.description,
+    price_amount = excluded.price_amount,
+    price_currency = excluded.price_currency,
+    status = excluded.status,
+    updated_at = now();
+
+do $$
+begin
+  alter table artworks
+    add constraint artworks_status_check
+    check (status in ('draft', 'listed', 'owned', 'reserved', 'sold', 'delisted'));
 exception
   when duplicate_object then null;
 end $$;

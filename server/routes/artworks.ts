@@ -24,7 +24,7 @@ router.get("/", async (req, res, next) => {
     const { data, error } = await supabase
       .from("artworks")
       .select("*, artists(*)")
-      .eq("status", status)
+      .in("status", status === "market" ? ["listed", "owned"] : [status])
       .order("created_at", { ascending: false });
 
     if (error) throw error;

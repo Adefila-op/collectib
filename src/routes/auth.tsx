@@ -94,7 +94,7 @@ function Auth() {
             {!isLogin && (
               <Field
                 label="Full name"
-                placeholder="Tima Bouzid"
+                placeholder="Your name"
                 value={fullName}
                 onChange={setFullName}
                 icon={<User size={16} />}

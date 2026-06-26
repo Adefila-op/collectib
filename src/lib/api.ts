@@ -48,12 +48,36 @@ export type Artwork = {
   token_mint?: string | null;
   metadata_uri?: string | null;
   image_url?: string | null;
-  status: string;
+  status: "draft" | "listed" | "owned" | "reserved" | "sold" | "delisted";
   created_at?: string;
   artists?: {
     name?: string | null;
     avatar_url?: string | null;
   } | null;
+};
+
+export type Artist = {
+  id: string;
+  databaseId: string;
+  name: string;
+  slug?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  location?: string | null;
+  practice?: string | null;
+  collectionTitle: string;
+  isFeatured: boolean;
+  ownedCount: number;
+  availableCount: number;
+  artworks: Artwork[];
+};
+
+export type ArtistCollection = {
+  id: string;
+  title: string;
+  owner: string;
+  artist: Artist;
+  artworks: Artwork[];
 };
 
 export type Offer = {
@@ -336,6 +360,18 @@ export function getArtworks(status = "listed") {
 
 export function getArtwork(id: string) {
   return request<{ artwork: Artwork }>(`/api/artworks/${encodeURIComponent(id)}`);
+}
+
+export function getArtists() {
+  return request<{ artists: Artist[] }>("/api/artists");
+}
+
+export function getArtist(id: string) {
+  return request<{ artist: Artist }>(`/api/artists/${encodeURIComponent(id)}`);
+}
+
+export function getArtistCollections() {
+  return request<{ collections: ArtistCollection[] }>("/api/artists/collections");
 }
 
 export function createArtwork(payload: {

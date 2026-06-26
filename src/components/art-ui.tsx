@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 
-// Abstract organic blob artwork used across screens
 export function BlobArt({ variant = 0, className = "" }: { variant?: number; className?: string }) {
   const palettes = [
     { bg: "#EDE7FF", shape: "#1A1A1A", accent: "#C9BCF5" },
@@ -45,6 +44,7 @@ export function ArtworkCard({
   variant = 0,
   size = "md",
   imageUrl,
+  assetStatus,
 }: {
   id?: string;
   title: string;
@@ -53,6 +53,7 @@ export function ArtworkCard({
   variant?: number;
   size?: "sm" | "md" | "lg";
   imageUrl?: string | null;
+  assetStatus?: string;
 }) {
   const dims = { sm: "h-28", md: "h-36", lg: "h-44" }[size];
   return (
@@ -65,12 +66,17 @@ export function ArtworkCard({
         )}
         <Link
           to="/favorites"
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur flex items-center justify-center text-[12px]"
+          onClick={(event) => event.stopPropagation()}
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur flex items-center justify-center text-[10px] font-bold"
           aria-label="Like"
         >
-          ♡
+          Like
         </Link>
+        {assetStatus === "owned" && (
+          <span className="absolute bottom-2 left-2 rounded-full bg-black/75 px-2 py-1 text-[10px] font-bold text-white">
+            Offer only
+          </span>
+        )}
       </div>
       <div className="mt-2 px-1">
         <p className="font-semibold text-sm leading-tight truncate">{title}</p>

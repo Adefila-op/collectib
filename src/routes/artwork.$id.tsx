@@ -57,7 +57,7 @@ function ArtworkRoute() {
                 </p>
               </div>
               <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold capitalize">
-                {artwork.status}
+                {artwork.status === "owned" ? "Owned asset" : artwork.status}
               </span>
             </div>
 
@@ -67,9 +67,13 @@ function ArtworkRoute() {
 
             <div className="mt-6 rounded-2xl bg-secondary p-4 space-y-2 text-sm">
               <Info label="Currency" value={artwork.price_currency} />
+              <Info
+                label="Asset type"
+                value={artwork.status === "owned" ? "Admin-owned physical artwork" : "Marketplace listing"}
+              />
               <Info label="Token mint" value={artwork.token_mint ?? "Not linked"} />
               <Info label="Metadata URI" value={artwork.metadata_uri ?? "Not linked"} />
-              <Info label="Status" value={artwork.status} />
+              <Info label="Status" value={artwork.status === "owned" ? "Offer only" : artwork.status} />
             </div>
 
             {artwork.description && (
@@ -81,9 +85,15 @@ function ArtworkRoute() {
             <SecondaryButton to="/make-offer/$id" params={{ id: artwork.id }}>
               Make Offer
             </SecondaryButton>
-            <PrimaryButton to="/checkout" search={{ artworkId: artwork.id }}>
-              Buy Now
-            </PrimaryButton>
+            {artwork.status === "owned" ? (
+              <PrimaryButton to="/make-offer/$id" params={{ id: artwork.id }}>
+                Offer Only
+              </PrimaryButton>
+            ) : (
+              <PrimaryButton to="/checkout" search={{ artworkId: artwork.id }}>
+                Buy Now
+              </PrimaryButton>
+            )}
           </div>
         </>
       )}

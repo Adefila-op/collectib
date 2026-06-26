@@ -61,7 +61,7 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
 
     if (artworkError) throw artworkError;
     const targetArtwork = artwork as ArtworkOfferTarget;
-    if (targetArtwork.status !== "listed") {
+    if (!["listed", "owned"].includes(targetArtwork.status)) {
       return res.status(409).json({ error: "This artwork is not accepting offers." });
     }
     if (targetArtwork.seller_profile_id === req.user?.sub) {
