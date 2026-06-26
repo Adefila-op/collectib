@@ -8,6 +8,7 @@ import {
   type Order,
   type PromoBanner,
 } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
@@ -114,7 +115,7 @@ function Admin() {
       {summary && (
         <>
           <div className="grid grid-cols-2 gap-3 px-5 mt-3">
-            <Stat label="Revenue" value={formatMoney(summary.stats.revenue ?? 0)} />
+            <Stat label="Revenue" value={formatLocalPrice(summary.stats.revenue ?? 0, "USD")} />
             <Stat label="Orders" value={String(summary.stats.orders ?? 0)} />
             <Stat label="Listed" value={String(summary.stats.listedArtworks ?? 0)} />
             <Stat label="Active Offers" value={String(summary.stats.activeOffers ?? 0)} />
@@ -205,17 +206,7 @@ function OrderRow({ order }: { order: Order }) {
           {order.payment_provider} / {order.status.replace(/_/g, " ")}
         </p>
       </div>
-      <span className="text-sm font-semibold">{formatMoney(order.amount, order.currency)}</span>
+      <span className="text-sm font-semibold">{formatLocalPrice(order.amount, order.currency)}</span>
     </div>
   );
-}
-
-function formatMoney(amount: number | string, currency = "USD") {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount}`;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency === "USDC" || currency === "SOL" ? "USD" : currency,
-    maximumFractionDigits: 2,
-  }).format(value);
 }

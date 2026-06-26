@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { getOffers, Offer } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/bids")({
   component: Bids,
@@ -51,7 +52,7 @@ function Bids() {
             </div>
             <div className="text-right">
               <p className="font-bold text-sm text-primary">
-                {formatMoney(offer.amount, offer.currency)}
+                {formatLocalPrice(offer.amount, offer.currency)}
               </p>
               <p
                 className={`text-[10px] font-bold ${offer.status === "accepted" ? "text-success" : offer.status === "rejected" ? "text-destructive" : "text-muted-foreground"}`}
@@ -64,15 +65,6 @@ function Bids() {
       </div>
     </MobileShell>
   );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  if (currency === "USD") {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
-  }
-  return `${value.toLocaleString()} ${currency}`;
 }
 
 function formatDate(value: string) {

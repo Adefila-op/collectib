@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { ArtworkCard, Chip } from "@/components/art-ui";
 import { getArtworks, type Artwork } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/explore")({
@@ -114,7 +115,7 @@ function Explore() {
             id={artwork.id}
             title={artwork.title}
             artist={artwork.artists?.name ?? "Independent artist"}
-            price={formatMoney(artwork.price_amount, artwork.price_currency)}
+            price={formatLocalPrice(artwork.price_amount, artwork.price_currency)}
             variant={i}
             imageUrl={artwork.image_url}
             assetStatus={artwork.status}
@@ -123,15 +124,4 @@ function Explore() {
       </div>
     </MobileShell>
   );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  const rendered = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency === "USDC" || currency === "SOL" ? "USD" : currency,
-    maximumFractionDigits: currency === "USD" ? 2 : 6,
-  }).format(value);
-  return currency === "USD" ? rendered : `${rendered} ${currency}`;
 }

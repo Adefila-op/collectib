@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { ArtworkCard, Chip } from "@/components/art-ui";
 import { Artist, getArtist } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/artist/$id/artworks")({
   component: ArtistArtworks,
@@ -57,7 +58,7 @@ function ArtistArtworks() {
             id={artwork.id}
             title={artwork.title}
             artist={artist?.name ?? "Featured artist"}
-            price={formatMoney(artwork.price_amount, artwork.price_currency)}
+            price={formatLocalPrice(artwork.price_amount, artwork.price_currency)}
             imageUrl={artwork.image_url}
             assetStatus={artwork.status}
             variant={index}
@@ -66,13 +67,4 @@ function ArtistArtworks() {
       </div>
     </div>
   );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  if (currency === "USD") {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
-  }
-  return `${value.toLocaleString()} ${currency}`;
 }

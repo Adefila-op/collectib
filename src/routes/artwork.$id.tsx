@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton, SecondaryButton } from "@/components/art-ui";
 import { getArtwork, type Artwork } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 import { Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/artwork/$id")({
@@ -62,7 +63,7 @@ function ArtworkRoute() {
             </div>
 
             <p className="text-3xl font-extrabold mt-5 text-primary">
-              {formatMoney(artwork.price_amount, artwork.price_currency)}
+              {formatLocalPrice(artwork.price_amount, artwork.price_currency)}
             </p>
 
             <div className="mt-6 rounded-2xl bg-secondary p-4 space-y-2 text-sm">
@@ -112,15 +113,4 @@ function Info({ label, value }: { label: string; value: string }) {
 
 function hashVariant(id: string) {
   return id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % 6;
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  const rendered = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency === "USDC" || currency === "SOL" ? "USD" : currency,
-    maximumFractionDigits: currency === "USD" ? 2 : 6,
-  }).format(value);
-  return currency === "USD" ? rendered : `${rendered} ${currency}`;
 }

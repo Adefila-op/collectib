@@ -9,6 +9,7 @@ import {
   type Artwork,
   type PromoBanner,
 } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 import { Search, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/home")({
@@ -96,7 +97,7 @@ function Home() {
                 id={artwork.id}
                 title={artwork.title}
                 artist={artwork.artists?.name ?? "Independent artist"}
-                price={formatMoney(artwork.price_amount, artwork.price_currency)}
+                price={formatLocalPrice(artwork.price_amount, artwork.price_currency)}
                 variant={i}
                 imageUrl={artwork.image_url}
                 assetStatus={artwork.status}
@@ -106,35 +107,6 @@ function Home() {
         </div>
       </div>
 
-      <div className="mt-6">
-        <SectionHeader title="Marketplace Actions" />
-        <div className="grid grid-cols-2 gap-3 px-5">
-          <ActionTile to="/explore" title="Browse" subtitle="Find listed works" />
-          <ActionTile to="/sell/create" title="List" subtitle="Create a sale listing" />
-          <ActionTile to="/offers" title="Offers" subtitle="Review sent and received" />
-          <ActionTile to="/wallet" title="Wallet" subtitle="Track holdings only" />
-        </div>
-      </div>
     </MobileShell>
   );
-}
-
-function ActionTile({ to, title, subtitle }: { to: string; title: string; subtitle: string }) {
-  return (
-    <Link to={to} className="rounded-2xl bg-surface border border-border p-4">
-      <p className="font-semibold text-sm">{title}</p>
-      <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-    </Link>
-  );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  const rendered = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency === "USDC" || currency === "SOL" ? "USD" : currency,
-    maximumFractionDigits: currency === "USD" ? 2 : 6,
-  }).format(value);
-  return currency === "USD" ? rendered : `${rendered} ${currency}`;
 }

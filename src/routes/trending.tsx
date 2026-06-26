@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { ArtworkCard } from "@/components/art-ui";
 import { Artwork, getArtworks } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/trending")({
   component: Trending,
@@ -43,7 +44,7 @@ function Trending() {
             id={artwork.id}
             title={artwork.title}
             artist={artwork.artists?.name ?? "Collectibles artist"}
-            price={formatMoney(artwork.price_amount, artwork.price_currency)}
+            price={formatLocalPrice(artwork.price_amount, artwork.price_currency)}
             imageUrl={artwork.image_url}
             assetStatus={artwork.status}
             variant={index}
@@ -52,13 +53,4 @@ function Trending() {
       </div>
     </MobileShell>
   );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  if (currency === "USD") {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
-  }
-  return `${value.toLocaleString()} ${currency}`;
 }

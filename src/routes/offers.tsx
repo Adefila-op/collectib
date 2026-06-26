@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { Chip } from "@/components/art-ui";
 import { getOffers, getSessionProfileId, updateOfferStatus, type Offer } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/offers")({
   component: Offers,
@@ -78,7 +79,7 @@ function Offers() {
               <span className={statusClass(offer.status)}>{offer.status}</span>
             </div>
             <p className="mt-2 text-lg font-bold text-primary">
-              {formatMoney(offer.amount, offer.currency)}
+              {formatLocalPrice(offer.amount, offer.currency)}
             </p>
             {offer.message && <p className="mt-2 text-sm text-muted-foreground">{offer.message}</p>}
             {offer.status === "active" && tab === "Received" && (
@@ -120,15 +121,4 @@ function statusClass(status: Offer["status"]) {
         ? "bg-destructive/15 text-destructive"
         : "bg-secondary text-muted-foreground";
   return `text-[10px] font-bold px-2 py-1 rounded-full capitalize ${tone}`;
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  const rendered = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency === "USDC" || currency === "SOL" ? "USD" : currency,
-    maximumFractionDigits: currency === "USD" ? 2 : 6,
-  }).format(value);
-  return currency === "USD" ? rendered : `${rendered} ${currency}`;
 }

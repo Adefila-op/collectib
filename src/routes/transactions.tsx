@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { getOrders, Order } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/transactions")({
   component: Transactions,
@@ -36,7 +37,7 @@ function Transactions() {
         id: order.id,
         kind: order.status === "paid" || order.status === "completed" ? "Purchase" : "Order",
         title: order.artworks?.title ?? "Marketplace artwork",
-        value: formatMoney(order.amount, order.currency),
+        value: formatLocalPrice(order.amount, order.currency),
         date: order.created_at ? formatDate(order.created_at) : "Pending",
       })),
     [orders],
@@ -66,15 +67,6 @@ function Transactions() {
       </div>
     </MobileShell>
   );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  if (currency === "USD") {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
-  }
-  return `${value.toLocaleString()} ${currency}`;
 }
 
 function formatDate(value: string) {

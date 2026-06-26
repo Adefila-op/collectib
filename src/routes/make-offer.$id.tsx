@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton } from "@/components/art-ui";
 import { createOffer, getArtwork, type Artwork } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/make-offer/$id")({
   component: MakeOffer,
@@ -68,7 +69,7 @@ function MakeOffer() {
                 <p className="font-semibold text-sm">{artwork.title}</p>
                 <p className="text-xs text-muted-foreground">
                   {artwork.status === "owned" ? "Owner guide value" : "List price"}{" "}
-                  {formatMoney(artwork.price_amount, artwork.price_currency)}
+                  {formatLocalPrice(artwork.price_amount, artwork.price_currency)}
                 </p>
               </div>
             </div>
@@ -81,7 +82,7 @@ function MakeOffer() {
             <div className="mt-6 rounded-3xl bg-primary-softer p-5 text-center">
               <p className="text-xs text-muted-foreground">Your offer</p>
               <p className="text-4xl font-extrabold text-primary mt-2">
-                {formatMoney(amount, artwork.price_currency)}
+                {formatLocalPrice(amount, artwork.price_currency)}
               </p>
               <input
                 type="range"
@@ -112,15 +113,4 @@ function MakeOffer() {
       </div>
     </div>
   );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  const rendered = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency === "USDC" || currency === "SOL" ? "USD" : currency,
-    maximumFractionDigits: currency === "USD" ? 2 : 6,
-  }).format(value);
-  return currency === "USD" ? rendered : `${rendered} ${currency}`;
 }

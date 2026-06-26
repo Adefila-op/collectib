@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { BlobArt, Chip } from "@/components/art-ui";
 import { Artwork, getArtworks } from "@/lib/api";
+import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/auctions")({
   component: Auctions,
@@ -70,7 +71,7 @@ function Auctions() {
             <div className="text-right">
               <p className="text-[10px] text-muted-foreground">Price</p>
               <p className="font-bold text-sm text-primary">
-                {formatMoney(artwork.price_amount, artwork.price_currency)}
+                {formatLocalPrice(artwork.price_amount, artwork.price_currency)}
               </p>
             </div>
           </Link>
@@ -78,13 +79,4 @@ function Auctions() {
       </div>
     </MobileShell>
   );
-}
-
-function formatMoney(amount: number | string, currency: string) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  if (currency === "USD") {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
-  }
-  return `${value.toLocaleString()} ${currency}`;
 }
