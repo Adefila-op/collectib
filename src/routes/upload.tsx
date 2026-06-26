@@ -16,7 +16,7 @@ function Upload() {
         <div className="rounded-3xl border-2 border-dashed border-border bg-secondary/40 h-52 flex flex-col items-center justify-center text-muted-foreground">
           <Image size={32} />
           <p className="text-sm mt-2 font-medium">Tap to upload image</p>
-          <p className="text-[11px]">JPG or PNG, up to 20 MB</p>
+          <p className="text-[11px]">JPG or PNG, up to 7 MB</p>
         </div>
         <div className="mt-5 space-y-3">
           {[
