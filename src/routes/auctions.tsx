@@ -15,11 +15,11 @@ function Auctions() {
 
   useEffect(() => {
     let cancelled = false;
-    getArtworks("listed")
+    getArtworks("market")
       .then(({ artworks }) => {
         if (cancelled) return;
         setItems(artworks);
-        setStatus(artworks.length ? "" : "No live listings yet.");
+        setStatus(artworks.length ? "" : "No marketplace artworks yet.");
       })
       .catch((error) => {
         if (!cancelled) setStatus(error instanceof Error ? error.message : "Could not load listings.");
@@ -64,7 +64,7 @@ function Auctions() {
                 by {artwork.artists?.name ?? "Collectibles artist"}
               </p>
               <p className="text-[10px] text-muted-foreground mt-1 font-semibold">
-                {tab} listing
+                {artwork.status === "owned" ? "Offer-only owned asset" : `${tab} listing`}
               </p>
             </div>
             <div className="text-right">

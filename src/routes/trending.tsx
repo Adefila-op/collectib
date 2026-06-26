@@ -14,11 +14,11 @@ function Trending() {
 
   useEffect(() => {
     let cancelled = false;
-    getArtworks("listed")
+    getArtworks("market")
       .then(({ artworks }) => {
         if (cancelled) return;
         setItems(artworks);
-        setStatus(artworks.length ? "" : "No trending listings yet.");
+        setStatus(artworks.length ? "" : "No marketplace artworks yet.");
       })
       .catch((error) => {
         if (!cancelled) setStatus(error instanceof Error ? error.message : "Could not load listings.");
@@ -45,6 +45,7 @@ function Trending() {
             artist={artwork.artists?.name ?? "Collectibles artist"}
             price={formatMoney(artwork.price_amount, artwork.price_currency)}
             imageUrl={artwork.image_url}
+            assetStatus={artwork.status}
             variant={index}
           />
         ))}

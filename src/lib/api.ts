@@ -354,7 +354,7 @@ export function getHomePromoBanner() {
   return request<{ banner: PromoBanner }>("/api/promos/home-banner");
 }
 
-export function getArtworks(status = "listed") {
+export function getArtworks(status = "market") {
   return request<{ artworks: Artwork[] }>(`/api/artworks?status=${encodeURIComponent(status)}`);
 }
 

@@ -28,7 +28,7 @@ function Explore() {
     getArtworks()
       .then((response) => {
         setArtworks(response.artworks);
-        setStatus(response.artworks.length ? "" : "No listed artworks yet.");
+        setStatus(response.artworks.length ? "" : "No marketplace artworks yet.");
       })
       .catch((error) => {
         setStatus(error instanceof Error ? error.message : "Could not load artworks.");
@@ -117,6 +117,7 @@ function Explore() {
             price={formatMoney(artwork.price_amount, artwork.price_currency)}
             variant={i}
             imageUrl={artwork.image_url}
+            assetStatus={artwork.status}
           />
         ))}
       </div>
