@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { InstallGate } from "@/components/install-gate";
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -68,14 +69,38 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowSplash(false), 2600);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <InstallGate>
+          {showSplash && <LaunchSplash onDone={() => setShowSplash(false)} />}
           <Outlet />
         </InstallGate>
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function LaunchSplash({ onDone }: { onDone: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
+      <video
+        src="/assets/app-logo-splash.mp4"
+        className="h-full max-h-[68vh] w-full max-w-[360px] object-contain"
+        autoPlay
+        muted
+        playsInline
+        aria-label="Collectibles"
+        onEnded={onDone}
+      />
+    </div>
   );
 }
