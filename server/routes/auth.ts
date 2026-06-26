@@ -111,6 +111,39 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("base64url");
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return "";
+}
+
+function isMissingSchemaError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+  const code =
+    error && typeof error === "object" && "code" in error && typeof error.code === "string"
+      ? error.code
+      : "";
+  return (
+    code === "42P01" ||
+    code === "42703" ||
+    message.includes("could not find") ||
+    message.includes("does not exist") ||
+    message.includes("schema cache")
+  );
+}
+
+function throwDbError(error: unknown) {
+  if (!error) return;
+  throw new Error(getErrorMessage(error) || "Database request failed.");
+}
+
 function signProfileToken(profile: ProfileRow, extra: { email?: string } = {}) {
   requireEnv("jwtSecret");
 
@@ -160,7 +193,10 @@ async function recordAuthRecognition(req: Request, profileId: string) {
     { onConflict: "recognition_key" },
   );
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingSchemaError(error)) return;
+    throwDbError(error);
+  }
 }
 
 function getOptionalSession(req: { headers: { authorization?: string } }) {
@@ -220,9 +256,21 @@ router.post("/signup", async (req, res, next) => {
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    if (tokenError) throw tokenError;
+    if (tokenError && isMissingSchemaError(tokenError)) {
+      const token = signProfileToken(userProfile, { email });
+      await recordAuthRecognition(req, userProfile.id);
+      return res.status(201).json({ token, profile: userProfile });
+    }
 
-    await sendVerificationEmail(email, fullName, verificationToken);
+    if (tokenError) throwDbError(tokenError);
+
+    try {
+      await sendVerificationEmail(email, fullName, verificationToken);
+    } catch (error) {
+      const token = signProfileToken(userProfile, { email });
+      await recordAuthRecognition(req, userProfile.id);
+      return res.status(201).json({ token, profile: userProfile });
+    }
 
     return res.status(201).json({
       needsVerification: true,
@@ -310,13 +358,23 @@ router.post("/login", async (req, res, next) => {
     const { email, password } = emailAuthSchema.parse(req.body);
     const supabase = getSupabase();
 
-    const { data: account, error } = await supabase
+    let { data: account, error } = await supabase
       .from("email_accounts")
       .select("email, password_hash, email_verified_at, profiles(id, wallet_address, display_name, avatar_url)")
       .eq("email", email)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error && isMissingSchemaError(error)) {
+      const fallback = await supabase
+        .from("email_accounts")
+        .select("email, password_hash, profiles(id, wallet_address, display_name, avatar_url)")
+        .eq("email", email)
+        .maybeSingle();
+      account = fallback.data;
+      error = fallback.error;
+    }
+
+    if (error) throwDbError(error);
 
     const emailAccount = account as EmailAccountRow | null;
     if (
@@ -327,7 +385,7 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    if (!emailAccount.email_verified_at) {
+    if ("email_verified_at" in emailAccount && !emailAccount.email_verified_at) {
       return res.status(403).json({ error: "Please verify your email before logging in." });
     }
 

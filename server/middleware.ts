@@ -26,7 +26,15 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
 }
 
 export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
+  const message =
+    error instanceof Error
+      ? error.message
+      : error &&
+          typeof error === "object" &&
+          "message" in error &&
+          typeof error.message === "string"
+        ? error.message
+        : "Unexpected server error.";
   const status =
     message.startsWith("Missing required") || message.includes("not configured") ? 500 : 400;
 
