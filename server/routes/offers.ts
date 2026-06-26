@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { config, requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
 import { requireAuth } from "../middleware.js";
 import { recalculateArtworkMarketValue } from "../services/market-value.js";
@@ -12,6 +13,12 @@ const offerSchema = z.object({
   amount: z.number().positive(),
   currency: z.enum(["USD", "USDC", "SOL"]).default("USD"),
   message: z.string().max(500).optional(),
+  paymentProvider: z.enum(["wallet", "flutterwave"]),
+});
+
+const walletPaymentSchema = z.object({
+  walletAddress: z.string().min(32).max(64),
+  txSignature: z.string().min(32).max(128),
 });
 
 type ArtworkOfferTarget = {
@@ -29,6 +36,16 @@ type OfferTransitionRow = {
 
 type CreatedOfferRow = {
   id: string;
+  amount: number | string;
+  currency: string;
+  payment_reference: string;
+};
+
+type FlutterwavePaymentResponse = {
+  status?: string;
+  data?: {
+    link?: string;
+  } & Record<string, unknown>;
 };
 
 router.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -68,6 +85,7 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
       return res.status(409).json({ error: "You cannot make an offer on your own listing." });
     }
 
+    const paymentReference = `OFFER-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const { data, error } = await supabase
       .from("offers")
       .insert({
@@ -77,16 +95,105 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
         amount: payload.amount,
         currency: payload.currency,
         message: payload.message,
-        status: "active",
+        payment_provider: payload.paymentProvider,
+        payment_reference: paymentReference,
+        status: "pending_payment",
       })
       .select("*")
       .single();
 
     if (error) throw error;
     const createdOffer = data as CreatedOfferRow;
-    await recalculateArtworkMarketValue(payload.artworkId, "offer_created", createdOffer.id);
 
-    return res.status(201).json({ offer: data });
+    if (payload.paymentProvider === "flutterwave") {
+      const secretKey = requireEnv("flutterwaveSecretKey");
+      const redirectUrl = config.paymentRedirectUrl || `${req.protocol}://${req.get("host")}/offers`;
+      const response = await fetch("https://api.flutterwave.com/v3/payments", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${secretKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          tx_ref: createdOffer.payment_reference,
+          amount: Number(createdOffer.amount),
+          currency: createdOffer.currency,
+          redirect_url: redirectUrl,
+          customer: {
+            email: req.user?.email ?? `${req.user?.sub}@collectibles.local`,
+            name: req.user?.walletAddress ?? "Collector",
+          },
+          customizations: {
+            title: "Collectibles artwork offer",
+            description: "Offer payment",
+          },
+        }),
+      });
+      const body = (await response.json()) as FlutterwavePaymentResponse;
+      if (!response.ok || body.status !== "success") {
+        return res.status(502).json({ error: "Flutterwave checkout failed.", details: body });
+      }
+
+      return res.status(201).json({
+        offer: data,
+        paymentReference: createdOffer.payment_reference,
+        checkoutUrl: body.data?.link,
+      });
+    }
+
+    return res.status(201).json({ offer: data, paymentReference: createdOffer.payment_reference });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/:id/wallet-payment", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const payload = walletPaymentSchema.parse(req.body);
+    if (payload.walletAddress !== req.user?.walletAddress) {
+      return res.status(403).json({ error: "Payment wallet must match the connected wallet." });
+    }
+
+    const supabase = getSupabase();
+    const { data: existing, error: existingError } = await supabase
+      .from("offers")
+      .select("id, artwork_id, buyer_profile_id, seller_profile_id, status, payment_provider")
+      .eq("id", req.params.id)
+      .single();
+
+    if (existingError) throw existingError;
+    const existingOffer = existing as OfferTransitionRow & { payment_provider?: string };
+    if (existingOffer.buyer_profile_id !== req.user?.sub) {
+      return res.status(403).json({ error: "You can only pay for your own offer." });
+    }
+    if (existingOffer.payment_provider !== "wallet") {
+      return res.status(409).json({ error: "This offer is not configured for wallet payment." });
+    }
+    if (existingOffer.status !== "pending_payment" && existingOffer.status !== "payment_review") {
+      return res.status(409).json({ error: "This offer is not awaiting payment." });
+    }
+
+    const { data, error } = await supabase
+      .from("offers")
+      .update({
+        status: "active",
+        offeror_wallet: payload.walletAddress,
+        settlement_signature: payload.txSignature,
+        payment_payload: {
+          walletAddress: payload.walletAddress,
+          txSignature: payload.txSignature,
+          submittedAt: new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", req.params.id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    await recalculateArtworkMarketValue(existingOffer.artwork_id, "offer_created", existingOffer.id);
+
+    return res.json({ offer: data });
   } catch (error) {
     next(error);
   }

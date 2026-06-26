@@ -2,7 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton } from "@/components/art-ui";
-import { createOffer, getArtwork, type Artwork } from "@/lib/api";
+import {
+  createOffer,
+  getArtwork,
+  getWalletAddress,
+  submitOfferWalletPayment,
+  type Artwork,
+  type Offer,
+} from "@/lib/api";
 import { formatLocalPrice } from "@/lib/pricing";
 
 export const Route = createFileRoute("/make-offer/$id")({
@@ -15,6 +22,9 @@ function MakeOffer() {
   const [artwork, setArtwork] = useState<Artwork | null>(null);
   const [amount, setAmount] = useState(0);
   const [message, setMessage] = useState("");
+  const [method, setMethod] = useState<"flutterwave" | "wallet">("flutterwave");
+  const [createdOffer, setCreatedOffer] = useState<Offer | null>(null);
+  const [txSignature, setTxSignature] = useState("");
   const [status, setStatus] = useState("Loading artwork...");
   const [isBusy, setIsBusy] = useState(false);
 
@@ -31,19 +41,40 @@ function MakeOffer() {
   }, [id]);
 
   const sendOffer = async () => {
-    if (!artwork || isBusy) return;
+    if (!artwork || isBusy || createdOffer) return;
     setIsBusy(true);
     setStatus("");
     try {
-      await createOffer({
+      const response = await createOffer({
         artworkId: artwork.id,
         amount,
         currency: artwork.price_currency,
+        paymentProvider: method,
         message: message.trim() || undefined,
       });
-      navigate({ to: "/offers" });
+      setCreatedOffer(response.offer);
+      if (method === "flutterwave" && response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+        return;
+      }
+      setStatus("Offer created. Submit your wallet transaction signature to activate it.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not send offer.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const submitWalletPayment = async () => {
+    const walletAddress = getWalletAddress();
+    if (!createdOffer || !walletAddress || !txSignature.trim() || isBusy) return;
+    setIsBusy(true);
+    setStatus("");
+    try {
+      await submitOfferWalletPayment(createdOffer.id, walletAddress, txSignature.trim());
+      navigate({ to: "/offers" });
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not submit wallet payment.");
     } finally {
       setIsBusy(false);
     }
@@ -103,14 +134,73 @@ function MakeOffer() {
                 className="w-full bg-transparent outline-none text-sm font-medium resize-none"
               />
             </div>
+            <div className="mt-4 space-y-2">
+              <PaymentOption
+                label="Pay offer with Flutterwave"
+                active={method === "flutterwave"}
+                onClick={() => setMethod("flutterwave")}
+              />
+              <PaymentOption
+                label="Pay offer through wallet"
+                active={method === "wallet"}
+                onClick={() => setMethod("wallet")}
+              />
+            </div>
+            {method === "wallet" && createdOffer && (
+              <div className="mt-4 rounded-2xl bg-secondary px-4 py-3">
+                <p className="text-[11px] text-muted-foreground">Wallet transaction signature</p>
+                <input
+                  value={txSignature}
+                  onChange={(event) => setTxSignature(event.target.value)}
+                  placeholder="Paste payment transaction signature"
+                  className="w-full bg-transparent outline-none text-sm font-medium"
+                />
+                <button
+                  onClick={submitWalletPayment}
+                  className="mt-3 w-full rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  Submit Wallet Payment
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
       <div className="fixed bottom-0 inset-x-0 max-w-[440px] mx-auto bg-surface border-t border-border p-4">
         <PrimaryButton onClick={sendOffer} className={!artwork || isBusy ? "opacity-60" : ""}>
-          {isBusy ? "Sending..." : "Send Offer"}
+          {isBusy
+            ? "Working..."
+            : method === "flutterwave"
+              ? "Pay Offer with Flutterwave"
+              : createdOffer
+                ? "Awaiting Wallet Signature"
+                : "Create Wallet Offer"}
         </PrimaryButton>
       </div>
     </div>
+  );
+}
+
+function PaymentOption({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 ${
+        active ? "border-primary bg-primary-softer" : "border-border bg-surface"
+      }`}
+    >
+      <span className="text-sm font-medium">{label}</span>
+      <span
+        className={`w-4 h-4 rounded-full border ${active ? "bg-primary border-primary" : "border-border"}`}
+      />
+    </button>
   );
 }

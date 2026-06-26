@@ -110,6 +110,10 @@ create table if not exists offers (
   amount numeric(18, 6) not null,
   currency text not null default 'USD',
   message text,
+  payment_provider text,
+  payment_reference text,
+  payment_payload jsonb,
+  settlement_signature text,
   status text not null default 'active',
   expires_at timestamptz not null default (now() + interval '7 days'),
   created_at timestamptz not null default now(),
@@ -211,6 +215,40 @@ create index if not exists orders_buyer_idx on orders(buyer_profile_id, created_
 create index if not exists sales_artwork_created_idx on sales(artwork_id, created_at desc);
 create index if not exists price_history_artwork_created_idx on price_history(artwork_id, created_at desc);
 create index if not exists webhook_events_provider_idx on webhook_events(provider, created_at desc);
+
+do $$
+begin
+  alter table offers
+    add column payment_provider text;
+exception
+  when duplicate_column then null;
+end $$;
+
+do $$
+begin
+  alter table offers
+    add column payment_reference text;
+exception
+  when duplicate_column then null;
+end $$;
+
+do $$
+begin
+  alter table offers
+    add column payment_payload jsonb;
+exception
+  when duplicate_column then null;
+end $$;
+
+do $$
+begin
+  alter table offers
+    add column settlement_signature text;
+exception
+  when duplicate_column then null;
+end $$;
+
+create index if not exists offers_payment_reference_idx on offers(payment_reference);
 
 do $$
 begin
@@ -439,8 +477,19 @@ end $$;
 do $$
 begin
   alter table offers
+    drop constraint if exists offers_status_check;
+  alter table offers
     add constraint offers_status_check
-    check (status in ('active', 'accepted', 'rejected', 'withdrawn', 'expired'));
+    check (status in ('pending_payment', 'payment_review', 'crypto_submitted', 'active', 'accepted', 'rejected', 'withdrawn', 'expired'));
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter table offers
+    add constraint offers_payment_provider_check
+    check (payment_provider is null or payment_provider in ('wallet', 'flutterwave'));
 exception
   when duplicate_object then null;
 end $$;

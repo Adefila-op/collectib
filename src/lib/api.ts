@@ -88,7 +88,18 @@ export type Offer = {
   amount: number | string;
   currency: "USD" | "USDC" | "SOL";
   message?: string | null;
-  status: "active" | "accepted" | "rejected" | "withdrawn" | "expired";
+  payment_provider?: "wallet" | "flutterwave" | null;
+  payment_reference?: string | null;
+  settlement_signature?: string | null;
+  status:
+    | "pending_payment"
+    | "payment_review"
+    | "crypto_submitted"
+    | "active"
+    | "accepted"
+    | "rejected"
+    | "withdrawn"
+    | "expired";
   created_at?: string;
   artworks?: {
     title?: string | null;
@@ -162,6 +173,16 @@ export type ActivityItem = {
   imageUrl?: string | null;
   createdAt?: string;
   time: string;
+};
+
+export type PortfolioSummary = {
+  stats: {
+    portfolioValue: number;
+    totalArtworks: number;
+    totalSpent: number;
+    totalReturn: number;
+  };
+  artworks: Artwork[];
 };
 
 export const DEFAULT_PROMO_BANNER: PromoBanner = {
@@ -350,6 +371,10 @@ export function getActivity() {
   return request<{ activities: ActivityItem[] }>("/api/me/activity");
 }
 
+export function getPortfolio() {
+  return request<PortfolioSummary>("/api/me/portfolio");
+}
+
 export function getHomePromoBanner() {
   return request<{ banner: PromoBanner }>("/api/promos/home-banner");
 }
@@ -420,11 +445,19 @@ export function createOffer(payload: {
   artworkId: string;
   amount: number;
   currency: "USD" | "USDC" | "SOL";
+  paymentProvider: "wallet" | "flutterwave";
   message?: string;
 }) {
-  return request<{ offer: Offer }>("/api/offers", {
+  return request<{ offer: Offer; paymentReference?: string; checkoutUrl?: string }>("/api/offers", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function submitOfferWalletPayment(offerId: string, walletAddress: string, txSignature: string) {
+  return request<{ offer: Offer }>(`/api/offers/${encodeURIComponent(offerId)}/wallet-payment`, {
+    method: "POST",
+    body: JSON.stringify({ walletAddress, txSignature }),
   });
 }
 

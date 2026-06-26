@@ -51,6 +51,25 @@ type ActivityOrderRow = {
   artworks?: ActivityArtwork;
 };
 
+type PortfolioArtworkRow = {
+  id: string;
+  title: string;
+  price_amount?: number | string;
+  price_currency?: string;
+  image_url?: string | null;
+  status: string;
+  artists?: { name?: string | null } | null;
+};
+
+type PortfolioOrderRow = {
+  id: string;
+  amount?: number | string;
+  currency?: string;
+  status: string;
+  created_at?: string;
+  artworks?: PortfolioArtworkRow | null;
+};
+
 function formatMoney(amount: number | string | undefined, currency: string | undefined) {
   if (amount === undefined || currency === undefined) return "";
   const value = Number(amount);
@@ -189,6 +208,62 @@ router.get("/activity", requireAuth, async (req: AuthedRequest, res, next) => {
       .slice(0, 30);
 
     return res.json({ activities });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/portfolio", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const profileId = req.user?.sub;
+    if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });
+
+    const supabase = getSupabase();
+    const [orders, listings] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("id, amount, currency, status, created_at, artworks(id, title, price_amount, price_currency, image_url, status, artists(name))")
+        .eq("buyer_profile_id", profileId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("artworks")
+        .select("id, title, price_amount, price_currency, image_url, status, artists(name)")
+        .eq("seller_profile_id", profileId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (orders.error) throw orders.error;
+    if (listings.error) throw listings.error;
+
+    const orderRows = (orders.data ?? []) as PortfolioOrderRow[];
+    const listingRows = (listings.data ?? []) as PortfolioArtworkRow[];
+    const paidOrders = orderRows.filter((order) =>
+      ["paid", "crypto_submitted", "payment_review"].includes(order.status),
+    );
+    const purchasedArtworks = paidOrders
+      .map((order) => order.artworks)
+      .filter(Boolean) as PortfolioArtworkRow[];
+    const artworkById = new Map<string, PortfolioArtworkRow>();
+
+    [...purchasedArtworks, ...listingRows].forEach((artwork) => {
+      artworkById.set(artwork.id, artwork);
+    });
+
+    const totalSpent = paidOrders.reduce((sum, order) => sum + Number(order.amount ?? 0), 0);
+    const portfolioValue = Array.from(artworkById.values()).reduce(
+      (sum, artwork) => sum + Number(artwork.price_amount ?? 0),
+      0,
+    );
+
+    return res.json({
+      stats: {
+        portfolioValue,
+        totalArtworks: artworkById.size,
+        totalSpent,
+        totalReturn: portfolioValue - totalSpent,
+      },
+      artworks: Array.from(artworkById.values()),
+    });
   } catch (error) {
     next(error);
   }

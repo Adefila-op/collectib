@@ -1,10 +1,18 @@
 import { Router } from "express";
 import { requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
+import { recalculateArtworkMarketValue } from "../services/market-value.js";
 
 const router = Router();
 
 type PaymentOrderRow = {
+  id: string;
+  artwork_id: string;
+  amount: number | string;
+  currency: string;
+};
+
+type PaymentOfferRow = {
   id: string;
   artwork_id: string;
   amount: number | string;
@@ -75,7 +83,7 @@ router.post("/flutterwave", async (req, res, next) => {
         .from("orders")
         .select("id, artwork_id, amount, currency")
         .eq("payment_reference", reference)
-        .single();
+        .maybeSingle();
       const paymentOrder = order as PaymentOrderRow | null;
       const paidAmount = Number(req.body?.data?.amount ?? 0);
       const paidCurrency = req.body?.data?.currency;
@@ -99,6 +107,34 @@ router.post("/flutterwave", async (req, res, next) => {
           .from("artworks")
           .update({ status: "sold", updated_at: new Date().toISOString() })
           .eq("id", paymentOrder.artwork_id);
+      }
+
+      if (!paymentOrder) {
+        const { data: offer } = await supabase
+          .from("offers")
+          .select("id, artwork_id, amount, currency")
+          .eq("payment_reference", reference)
+          .maybeSingle();
+        const paymentOffer = offer as PaymentOfferRow | null;
+        const expectedOfferAmount = Number(paymentOffer?.amount ?? 0);
+        const offerPaymentMatches =
+          paymentOffer &&
+          paidAmount === expectedOfferAmount &&
+          (!paidCurrency || paidCurrency === paymentOffer.currency) &&
+          req.body?.data?.status === "successful";
+
+        await supabase
+          .from("offers")
+          .update({
+            status: offerPaymentMatches ? "active" : "payment_review",
+            payment_payload: req.body,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("payment_reference", reference);
+
+        if (offerPaymentMatches) {
+          await recalculateArtworkMarketValue(paymentOffer.artwork_id, "offer_created", paymentOffer.id);
+        }
       }
     }
 
