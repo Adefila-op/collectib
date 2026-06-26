@@ -60,6 +60,11 @@ function Auth() {
         ? await loginWithEmail({ email, password })
         : await signUpWithEmail({ fullName, email, password });
 
+      if ("needsVerification" in result) {
+        navigate({ to: "/verify-email" });
+        return;
+      }
+
       saveSession(result.token, result.profile.wallet_address);
       navigate({ to: isLogin ? "/home" : "/onboarding/wallet" });
     } catch (error) {

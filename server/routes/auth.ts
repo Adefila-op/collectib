@@ -7,6 +7,7 @@ import bs58 from "bs58";
 import { z } from "zod";
 import { config, requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../services/email.js";
 
 const router = Router();
 
@@ -35,6 +36,23 @@ const recognitionSchema = z.object({
   deviceId: z.string().trim().min(8).max(128).optional(),
 });
 
+const tokenSchema = z.object({
+  token: z.string().trim().min(16).max(256),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email()
+    .max(254)
+    .transform((email) => email.trim().toLowerCase()),
+});
+
+const resetPasswordSchema = forgotPasswordSchema.extend({
+  token: z.string().trim().min(16).max(256),
+  password: z.string().min(8).max(128),
+});
+
 type NonceRow = {
   message: string;
   expires_at: string;
@@ -50,6 +68,7 @@ type ProfileRow = {
 type EmailAccountRow = {
   email: string;
   password_hash: string;
+  email_verified_at?: string | null;
   profiles: ProfileRow | null;
 };
 
@@ -82,6 +101,14 @@ function verifyPassword(password: string, storedHash: string) {
   const expected = Buffer.from(hash, "base64url");
   const actual = scryptSync(password, salt, expected.length);
   return expected.length === actual.length && timingSafeEqual(expected, actual);
+}
+
+function createAuthToken() {
+  return randomBytes(32).toString("base64url");
+}
+
+function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("base64url");
 }
 
 function signProfileToken(profile: ProfileRow, extra: { email?: string } = {}) {
@@ -178,6 +205,7 @@ router.post("/signup", async (req, res, next) => {
     if (profileError) throw profileError;
 
     const userProfile = profile as ProfileRow;
+    const verificationToken = createAuthToken();
     const { error: accountError } = await supabase.from("email_accounts").insert({
       email,
       profile_id: userProfile.id,
@@ -186,9 +214,65 @@ router.post("/signup", async (req, res, next) => {
 
     if (accountError) throw accountError;
 
-    const token = signProfileToken(userProfile, { email });
-    await recordAuthRecognition(req, userProfile.id);
-    return res.status(201).json({ token, profile: userProfile });
+    const { error: tokenError } = await supabase.from("email_verification_tokens").insert({
+      email,
+      token_hash: hashToken(verificationToken),
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+
+    if (tokenError) throw tokenError;
+
+    await sendVerificationEmail(email, fullName, verificationToken);
+
+    return res.status(201).json({
+      needsVerification: true,
+      email,
+      message: "Check your email to verify your account.",
+      profile: userProfile,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/verify-email", async (req, res, next) => {
+  try {
+    const { token } = tokenSchema.parse(req.body);
+    const tokenHash = hashToken(token);
+    const supabase = getSupabase();
+
+    const { data: tokenRow, error: tokenError } = await supabase
+      .from("email_verification_tokens")
+      .select("email, expires_at, used_at")
+      .eq("token_hash", tokenHash)
+      .maybeSingle();
+
+    if (tokenError) throw tokenError;
+    if (!tokenRow || tokenRow.used_at || new Date(String(tokenRow.expires_at)).getTime() < Date.now()) {
+      return res.status(400).json({ error: "Verification link is invalid or expired." });
+    }
+
+    const verifiedAt = new Date().toISOString();
+    const { data: account, error: accountError } = await supabase
+      .from("email_accounts")
+      .update({ email_verified_at: verifiedAt, updated_at: verifiedAt })
+      .eq("email", String(tokenRow.email))
+      .select("email, profiles(id, wallet_address, display_name, avatar_url)")
+      .single();
+
+    if (accountError) throw accountError;
+
+    await supabase
+      .from("email_verification_tokens")
+      .update({ used_at: verifiedAt })
+      .eq("token_hash", tokenHash);
+
+    const profile = (account as { profiles: ProfileRow | null }).profiles;
+    if (!profile) return res.status(400).json({ error: "Account profile was not found." });
+
+    const sessionToken = signProfileToken(profile, { email: String(tokenRow.email) });
+    await recordAuthRecognition(req, profile.id);
+    return res.json({ token: sessionToken, profile });
   } catch (error) {
     next(error);
   }
@@ -228,7 +312,7 @@ router.post("/login", async (req, res, next) => {
 
     const { data: account, error } = await supabase
       .from("email_accounts")
-      .select("email, password_hash, profiles(id, wallet_address, display_name, avatar_url)")
+      .select("email, password_hash, email_verified_at, profiles(id, wallet_address, display_name, avatar_url)")
       .eq("email", email)
       .maybeSingle();
 
@@ -243,9 +327,91 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
+    if (!emailAccount.email_verified_at) {
+      return res.status(403).json({ error: "Please verify your email before logging in." });
+    }
+
     const token = signProfileToken(emailAccount.profiles, { email });
     await recordAuthRecognition(req, emailAccount.profiles.id);
     return res.json({ token, profile: emailAccount.profiles });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/forgot-password", async (req, res, next) => {
+  try {
+    const { email } = forgotPasswordSchema.parse(req.body);
+    const supabase = getSupabase();
+
+    const { data: account, error } = await supabase
+      .from("email_accounts")
+      .select("email")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (account) {
+      const resetToken = createAuthToken();
+      const { error: tokenError } = await supabase.from("password_reset_tokens").insert({
+        email,
+        token_hash: hashToken(resetToken),
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      });
+
+      if (tokenError) throw tokenError;
+      await sendPasswordResetEmail(email, resetToken);
+    }
+
+    return res.json({
+      message: "If an account exists for that email, a reset link has been sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/reset-password", async (req, res, next) => {
+  try {
+    const { email, token, password } = resetPasswordSchema.parse(req.body);
+    const tokenHash = hashToken(token);
+    const supabase = getSupabase();
+
+    const { data: tokenRow, error: tokenError } = await supabase
+      .from("password_reset_tokens")
+      .select("email, expires_at, used_at")
+      .eq("token_hash", tokenHash)
+      .eq("email", email)
+      .maybeSingle();
+
+    if (tokenError) throw tokenError;
+    if (!tokenRow || tokenRow.used_at || new Date(String(tokenRow.expires_at)).getTime() < Date.now()) {
+      return res.status(400).json({ error: "Reset link is invalid or expired." });
+    }
+
+    const now = new Date().toISOString();
+    const { data: account, error: accountError } = await supabase
+      .from("email_accounts")
+      .update({
+        password_hash: createPasswordHash(password),
+        email_verified_at: now,
+        updated_at: now,
+      })
+      .eq("email", email)
+      .select("email, profiles(id, wallet_address, display_name, avatar_url)")
+      .single();
+
+    if (accountError) throw accountError;
+
+    await supabase.from("password_reset_tokens").update({ used_at: now }).eq("token_hash", tokenHash);
+
+    const profile = (account as { profiles: ProfileRow | null }).profiles;
+    if (!profile) return res.status(400).json({ error: "Account profile was not found." });
+
+    const sessionToken = signProfileToken(profile, { email });
+    await recordAuthRecognition(req, profile.id);
+    return res.json({ token: sessionToken, profile });
   } catch (error) {
     next(error);
   }

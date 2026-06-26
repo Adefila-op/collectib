@@ -30,8 +30,25 @@ create table if not exists email_accounts (
   email text primary key,
   profile_id uuid references profiles(id) on delete cascade not null,
   password_hash text not null,
+  email_verified_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists email_verification_tokens (
+  token_hash text primary key,
+  email text references email_accounts(email) on delete cascade not null,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists password_reset_tokens (
+  token_hash text primary key,
+  email text references email_accounts(email) on delete cascade not null,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
 );
 
 create table if not exists auth_recognitions (
@@ -189,6 +206,20 @@ end $$;
 create index if not exists connected_wallets_profile_chain_idx on connected_wallets(profile_id, chain);
 create index if not exists auth_recognitions_profile_idx on auth_recognitions(profile_id);
 create index if not exists auth_recognitions_last_seen_idx on auth_recognitions(last_seen_at desc);
+create index if not exists email_verification_tokens_email_idx on email_verification_tokens(email);
+create index if not exists password_reset_tokens_email_idx on password_reset_tokens(email);
+
+do $$
+begin
+  alter table email_accounts
+    add column email_verified_at timestamptz;
+exception
+  when duplicate_column then null;
+end $$;
+
+update email_accounts
+set email_verified_at = coalesce(email_verified_at, created_at, now())
+where email_verified_at is null;
 
 do $$
 begin

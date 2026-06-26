@@ -7,6 +7,7 @@ const AUTH_TOKEN_KEY = "collectibles.authToken";
 const WALLET_ADDRESS_KEY = "collectibles.walletAddress";
 const AUTH_DEVICE_ID_KEY = "collectibles.authDeviceId";
 const KNOWN_AUTH_DEVICE_KEY = "collectibles.knownAuthDevice";
+export const AUTH_STATE_CHANGED_EVENT = "collectibles.authStateChanged";
 
 export type AuthProfile = {
   id: string;
@@ -26,6 +27,15 @@ type VerifyResponse = {
   token: string;
   profile: AuthProfile;
 };
+
+type SignupResponse =
+  | VerifyResponse
+  | {
+      needsVerification: true;
+      email: string;
+      message: string;
+      profile: AuthProfile;
+    };
 
 export type Artwork = {
   id: string;
@@ -151,6 +161,10 @@ export function getAuthToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
+export function isSignedIn() {
+  return Boolean(getAuthToken());
+}
+
 export function getWalletAddress() {
   return localStorage.getItem(WALLET_ADDRESS_KEY);
 }
@@ -187,6 +201,7 @@ export function saveSession(token: string, walletAddress: string) {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(WALLET_ADDRESS_KEY, walletAddress);
   markKnownAuthDevice();
+  window.dispatchEvent(new Event(AUTH_STATE_CHANGED_EVENT));
 }
 
 export function saveWalletAddress(walletAddress: string) {
@@ -196,6 +211,7 @@ export function saveWalletAddress(walletAddress: string) {
 export function clearSession() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(WALLET_ADDRESS_KEY);
+  window.dispatchEvent(new Event(AUTH_STATE_CHANGED_EVENT));
 }
 
 export function checkAuthRecognition() {
@@ -220,7 +236,7 @@ export function verifyWalletSignature(walletAddress: string, signature: number[]
 }
 
 export function signUpWithEmail(payload: { fullName: string; email: string; password: string }) {
-  return request<VerifyResponse>("/api/auth/signup", {
+  return request<SignupResponse>("/api/auth/signup", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -228,6 +244,27 @@ export function signUpWithEmail(payload: { fullName: string; email: string; pass
 
 export function loginWithEmail(payload: { email: string; password: string }) {
   return request<VerifyResponse>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function verifyEmailToken(token: string) {
+  return request<VerifyResponse>("/api/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
+export function requestPasswordReset(email: string) {
+  return request<{ message: string }>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(payload: { email: string; token: string; password: string }) {
+  return request<VerifyResponse>("/api/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(payload),
   });

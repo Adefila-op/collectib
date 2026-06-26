@@ -33,7 +33,14 @@ export const config = {
   flutterwaveSecretHash: process.env.FLUTTERWAVE_SECRET_HASH ?? "",
   flutterwaveSecretKey: process.env.FLUTTERWAVE_SECRET_KEY ?? "",
   paymentRedirectUrl: process.env.PAYMENT_REDIRECT_URL ?? "",
+  publicAppUrl: process.env.PUBLIC_APP_URL ?? configuredOrigins[0] ?? "http://localhost:5173",
   cronSecret: process.env.CRON_SECRET ?? "",
+  smtpHost: process.env.SMTP_HOST ?? "smtp-relay.brevo.com",
+  smtpPort: Number(process.env.SMTP_PORT ?? 587),
+  smtpUser: process.env.BREVO_SMTP_USER ?? process.env.SMTP_USER ?? "",
+  smtpPass: process.env.BREVO_SMTP_KEY ?? process.env.SMTP_PASS ?? "",
+  smtpFromEmail: process.env.SMTP_FROM_EMAIL ?? "",
+  smtpFromName: process.env.SMTP_FROM_NAME ?? "Collectibles",
   adminWallets: (process.env.ADMIN_WALLETS ?? "")
     .split(",")
     .map((wallet) => wallet.trim())

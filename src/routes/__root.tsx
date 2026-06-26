@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 import { InstallGate } from "@/components/install-gate";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 function NotFoundComponent() {
   return (
@@ -70,9 +71,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <InstallGate>
-        <Outlet />
-      </InstallGate>
+      <AuthProvider>
+        <InstallGate>
+          <Outlet />
+        </InstallGate>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
