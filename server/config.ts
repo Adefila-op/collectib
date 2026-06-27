@@ -9,6 +9,21 @@ const configuredOrigins = (process.env.APP_ORIGIN ?? "http://localhost:5173")
 
 const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
 const productionAppUrl = "https://collectibles-vite.vercel.app";
+const isProductionDeployment = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
+
+function isLocalUrl(value: string) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(value);
+}
+
+function resolvePublicAppUrl() {
+  const configured = process.env.PUBLIC_APP_URL?.trim();
+  if (configured && !(isProductionDeployment && isLocalUrl(configured))) {
+    return configured.replace(/\/$/, "");
+  }
+  if (vercelOrigin) return vercelOrigin.replace(/\/$/, "");
+  if (isProductionDeployment) return productionAppUrl;
+  return (configuredOrigins[0] ?? "http://localhost:5173").replace(/\/$/, "");
+}
 
 const appOrigins = Array.from(
   new Set(
@@ -33,13 +48,14 @@ export const config = {
   heliusApiKey: process.env.HELIUS_API_KEY ?? "",
   heliusWebhookSecret: process.env.HELIUS_WEBHOOK_SECRET ?? "",
   flutterwaveSecretHash: process.env.FLUTTERWAVE_SECRET_HASH ?? "",
-  flutterwaveSecretKey: process.env.FLUTTERWAVE_SECRET_KEY ?? "",
+  flutterwaveSecretKey:
+    process.env.FLUTTERWAVE_SECRET_KEY ??
+    process.env.FLW_SECRET_KEY ??
+    process.env.FLUTTERWAVE_API_KEY ??
+    process.env.Flutterwave_secret_key ??
+    "",
   paymentRedirectUrl: process.env.PAYMENT_REDIRECT_URL ?? "",
-  publicAppUrl:
-    process.env.PUBLIC_APP_URL ??
-    vercelOrigin ??
-    (process.env.NODE_ENV === "production" ? productionAppUrl : configuredOrigins[0]) ??
-    "http://localhost:5173",
+  publicAppUrl: resolvePublicAppUrl(),
   cronSecret: process.env.CRON_SECRET ?? "",
   adminWallets: (process.env.ADMIN_WALLETS ?? "")
     .split(",")

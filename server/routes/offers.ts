@@ -48,6 +48,10 @@ type FlutterwavePaymentResponse = {
   } & Record<string, unknown>;
 };
 
+function offerRedirectUrl() {
+  return `${config.publicAppUrl}/offers`;
+}
+
 router.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const supabase = getSupabase();
@@ -107,7 +111,7 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
 
     if (payload.paymentProvider === "flutterwave") {
       const secretKey = requireEnv("flutterwaveSecretKey");
-      const redirectUrl = config.paymentRedirectUrl || `${req.protocol}://${req.get("host")}/offers`;
+      const redirectUrl = offerRedirectUrl();
       const response = await fetch("https://api.flutterwave.com/v3/payments", {
         method: "POST",
         headers: {

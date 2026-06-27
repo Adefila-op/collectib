@@ -515,6 +515,13 @@ export function startFlutterwaveCheckout(orderId: string) {
   );
 }
 
+export function verifyFlutterwaveCheckout(payload: { txRef: string; transactionId?: string }) {
+  return request<{ verified: boolean; order: Order; status?: string }>("/api/orders/flutterwave/verify", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function submitCryptoPayment(orderId: string, walletAddress: string, txSignature: string) {
   return request<{ order: Order }>(`/api/orders/${encodeURIComponent(orderId)}/crypto-payment`, {
     method: "POST",

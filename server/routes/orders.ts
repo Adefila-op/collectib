@@ -3,7 +3,7 @@ import { z } from "zod";
 import { config, requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
 import { requireAuth } from "../middleware.js";
-import { attachAffiliateToOrder } from "./affiliates.js";
+import { attachAffiliateToOrder, markAffiliateOrderPaid } from "./affiliates.js";
 import type { AuthedRequest } from "../types.js";
 
 const router = Router();
@@ -18,6 +18,11 @@ const orderSchema = z.object({
 const cryptoPaymentSchema = z.object({
   walletAddress: z.string().min(32).max(64),
   txSignature: z.string().min(32).max(128),
+});
+
+const verifyFlutterwaveSchema = z.object({
+  txRef: z.string().trim().min(6).max(120),
+  transactionId: z.string().trim().min(1).max(80).optional(),
 });
 
 type OrderArtworkRow = {
@@ -41,10 +46,29 @@ type CryptoOrderRow = {
 
 type FlutterwavePaymentResponse = {
   status?: string;
+  message?: string;
   data?: {
     link?: string;
   } & Record<string, unknown>;
 };
+
+type FlutterwaveVerificationResponse = {
+  status?: string;
+  message?: string;
+  data?: {
+    status?: string;
+    tx_ref?: string;
+    amount?: number | string;
+    currency?: string;
+  } & Record<string, unknown>;
+};
+
+function paymentSuccessUrl(txRef: string) {
+  const base = config.paymentRedirectUrl || `${config.publicAppUrl}/checkout/success`;
+  const url = new URL(base);
+  url.searchParams.set("tx_ref", txRef);
+  return url.toString();
+}
 
 router.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
@@ -164,8 +188,7 @@ router.post("/:id/flutterwave", requireAuth, async (req: AuthedRequest, res, nex
     }
 
     const txRef = checkoutOrder.payment_reference;
-    const redirectUrl =
-      config.paymentRedirectUrl || `${req.protocol}://${req.get("host")}/checkout/success`;
+    const redirectUrl = paymentSuccessUrl(txRef);
     const response = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
       headers: {
@@ -178,7 +201,7 @@ router.post("/:id/flutterwave", requireAuth, async (req: AuthedRequest, res, nex
         currency: checkoutOrder.currency,
         redirect_url: redirectUrl,
         customer: {
-          email: `${profileId}@collectibles.local`,
+          email: req.user?.email ?? `${profileId}@collectibles.local`,
           name: req.user?.walletAddress ?? "Collector",
         },
         customizations: {
@@ -197,6 +220,78 @@ router.post("/:id/flutterwave", requireAuth, async (req: AuthedRequest, res, nex
       checkoutUrl: body.data?.link,
       providerResponse: body.data,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/flutterwave/verify", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const secretKey = requireEnv("flutterwaveSecretKey");
+    const payload = verifyFlutterwaveSchema.parse(req.body);
+    const profileId = req.user?.sub;
+    if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });
+
+    const supabase = getSupabase();
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id, artwork_id, buyer_profile_id, amount, currency, payment_reference")
+      .eq("payment_reference", payload.txRef)
+      .single();
+
+    if (orderError) throw orderError;
+    const checkoutOrder = order as CheckoutOrderRow & { id: string; artwork_id: string };
+    if (checkoutOrder.buyer_profile_id !== profileId) {
+      return res.status(403).json({ error: "You can only verify your own order." });
+    }
+
+    if (!payload.transactionId) {
+      return res.json({ verified: false, status: "pending", order });
+    }
+
+    const response = await fetch(
+      `https://api.flutterwave.com/v3/transactions/${encodeURIComponent(payload.transactionId)}/verify`,
+      {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${secretKey}`,
+        },
+      },
+    );
+    const body = (await response.json()) as FlutterwaveVerificationResponse;
+    if (!response.ok || body.status !== "success") {
+      return res.status(502).json({ error: body.message || "Flutterwave verification failed." });
+    }
+
+    const payment = body.data;
+    const paymentMatches =
+      payment?.status === "successful" &&
+      payment.tx_ref === checkoutOrder.payment_reference &&
+      Number(payment.amount ?? 0) === Number(checkoutOrder.amount) &&
+      (!payment.currency || payment.currency === checkoutOrder.currency);
+
+    const { data: updated, error } = await supabase
+      .from("orders")
+      .update({
+        status: paymentMatches ? "paid" : "payment_review",
+        payment_payload: body,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", checkoutOrder.id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    if (paymentMatches) {
+      await supabase
+        .from("artworks")
+        .update({ status: "sold", updated_at: new Date().toISOString() })
+        .eq("id", checkoutOrder.artwork_id);
+      await markAffiliateOrderPaid(checkoutOrder.id);
+    }
+
+    return res.json({ verified: paymentMatches, order: updated, providerResponse: payment });
   } catch (error) {
     next(error);
   }
