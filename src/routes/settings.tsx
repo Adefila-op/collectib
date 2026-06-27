@@ -12,13 +12,13 @@ type SettingsItem = [label: string, value: string | undefined, to: FileRouteType
 function Settings() {
   const account: SettingsItem[] = [
     ["Edit Profile", undefined, "/profile"],
-    ["Change Password", undefined, "/forgot-password"],
-    ["Payment Methods", undefined, "/wallet"],
+    ["Change Password", undefined, "/settings/security"],
+    ["Payment Methods", undefined, "/portfolio"],
   ];
   const prefs: SettingsItem[] = [
-    ["Currency", "USD", "/settings"],
+    ["Currency", "USD", "/settings/currency"],
     ["Notifications", undefined, "/notifications"],
-    ["Provenance & Certificates", undefined, "/settings"],
+    ["Provenance & Certificates", undefined, "/settings/provenance"],
     ["Returns & Refunds", undefined, "/shipping"],
   ];
   return (

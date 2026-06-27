@@ -54,6 +54,9 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsSecurityRouteImport } from './routes/settings.security'
+import { Route as SettingsProvenanceRouteImport } from './routes/settings.provenance'
+import { Route as SettingsCurrencyRouteImport } from './routes/settings.currency'
 import { Route as SellCreateRouteImport } from './routes/sell.create'
 import { Route as SearchFiltersRouteImport } from './routes/search.filters'
 import { Route as ProvenanceIdRouteImport } from './routes/provenance.$id'
@@ -299,6 +302,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsSecurityRoute = SettingsSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsProvenanceRoute = SettingsProvenanceRouteImport.update({
+  id: '/provenance',
+  path: '/provenance',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsCurrencyRoute = SettingsCurrencyRouteImport.update({
+  id: '/currency',
+  path: '/currency',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SellCreateRoute = SellCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -429,7 +447,7 @@ export interface FileRoutesByFullPath {
   '/saved': typeof SavedRoute
   '/search': typeof SearchRouteWithChildren
   '/sell': typeof SellRouteWithChildren
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/shipping': typeof ShippingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -459,6 +477,9 @@ export interface FileRoutesByFullPath {
   '/provenance/$id': typeof ProvenanceIdRoute
   '/search/filters': typeof SearchFiltersRoute
   '/sell/create': typeof SellCreateRoute
+  '/settings/currency': typeof SettingsCurrencyRoute
+  '/settings/provenance': typeof SettingsProvenanceRoute
+  '/settings/security': typeof SettingsSecurityRoute
   '/artist/$id/artworks': typeof ArtistIdArtworksRoute
 }
 export interface FileRoutesByTo {
@@ -495,7 +516,7 @@ export interface FileRoutesByTo {
   '/saved': typeof SavedRoute
   '/search': typeof SearchRouteWithChildren
   '/sell': typeof SellRouteWithChildren
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/shipping': typeof ShippingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -525,6 +546,9 @@ export interface FileRoutesByTo {
   '/provenance/$id': typeof ProvenanceIdRoute
   '/search/filters': typeof SearchFiltersRoute
   '/sell/create': typeof SellCreateRoute
+  '/settings/currency': typeof SettingsCurrencyRoute
+  '/settings/provenance': typeof SettingsProvenanceRoute
+  '/settings/security': typeof SettingsSecurityRoute
   '/artist/$id/artworks': typeof ArtistIdArtworksRoute
 }
 export interface FileRoutesById {
@@ -562,7 +586,7 @@ export interface FileRoutesById {
   '/saved': typeof SavedRoute
   '/search': typeof SearchRouteWithChildren
   '/sell': typeof SellRouteWithChildren
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/shipping': typeof ShippingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
@@ -592,6 +616,9 @@ export interface FileRoutesById {
   '/provenance/$id': typeof ProvenanceIdRoute
   '/search/filters': typeof SearchFiltersRoute
   '/sell/create': typeof SellCreateRoute
+  '/settings/currency': typeof SettingsCurrencyRoute
+  '/settings/provenance': typeof SettingsProvenanceRoute
+  '/settings/security': typeof SettingsSecurityRoute
   '/artist/$id/artworks': typeof ArtistIdArtworksRoute
 }
 export interface FileRouteTypes {
@@ -660,6 +687,9 @@ export interface FileRouteTypes {
     | '/provenance/$id'
     | '/search/filters'
     | '/sell/create'
+    | '/settings/currency'
+    | '/settings/provenance'
+    | '/settings/security'
     | '/artist/$id/artworks'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -726,6 +756,9 @@ export interface FileRouteTypes {
     | '/provenance/$id'
     | '/search/filters'
     | '/sell/create'
+    | '/settings/currency'
+    | '/settings/provenance'
+    | '/settings/security'
     | '/artist/$id/artworks'
   id:
     | '__root__'
@@ -792,6 +825,9 @@ export interface FileRouteTypes {
     | '/provenance/$id'
     | '/search/filters'
     | '/sell/create'
+    | '/settings/currency'
+    | '/settings/provenance'
+    | '/settings/security'
     | '/artist/$id/artworks'
   fileRoutesById: FileRoutesById
 }
@@ -829,7 +865,7 @@ export interface RootRouteChildren {
   SavedRoute: typeof SavedRoute
   SearchRoute: typeof SearchRouteWithChildren
   SellRoute: typeof SellRouteWithChildren
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   ShippingRoute: typeof ShippingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
@@ -1173,6 +1209,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/security': {
+      id: '/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof SettingsSecurityRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/provenance': {
+      id: '/settings/provenance'
+      path: '/provenance'
+      fullPath: '/settings/provenance'
+      preLoaderRoute: typeof SettingsProvenanceRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/currency': {
+      id: '/settings/currency'
+      path: '/currency'
+      fullPath: '/settings/currency'
+      preLoaderRoute: typeof SettingsCurrencyRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/sell/create': {
       id: '/sell/create'
       path: '/create'
@@ -1356,6 +1413,22 @@ const SellRouteChildren: SellRouteChildren = {
 
 const SellRouteWithChildren = SellRoute._addFileChildren(SellRouteChildren)
 
+interface SettingsRouteChildren {
+  SettingsCurrencyRoute: typeof SettingsCurrencyRoute
+  SettingsProvenanceRoute: typeof SettingsProvenanceRoute
+  SettingsSecurityRoute: typeof SettingsSecurityRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsCurrencyRoute: SettingsCurrencyRoute,
+  SettingsProvenanceRoute: SettingsProvenanceRoute,
+  SettingsSecurityRoute: SettingsSecurityRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 interface ArtistIdRouteChildren {
   ArtistIdArtworksRoute: typeof ArtistIdArtworksRoute
 }
@@ -1402,7 +1475,7 @@ const rootRouteChildren: RootRouteChildren = {
   SavedRoute: SavedRoute,
   SearchRoute: SearchRouteWithChildren,
   SellRoute: SellRouteWithChildren,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   ShippingRoute: ShippingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,

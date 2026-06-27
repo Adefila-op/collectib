@@ -68,7 +68,7 @@ function Home() {
         detailsTitle: "Collectibles affiliate network",
         detailsBody:
           "Earn rewards by introducing collectors, artists, and galleries to Collectibles.",
-        to: "/invite" as const,
+        href: "/affliate/",
         theme: "affiliate",
       },
     ],
@@ -107,12 +107,7 @@ function Home() {
         </span>
       </Link>
 
-      <Link
-        to={currentPromo.to}
-        className={`relative mx-5 mt-5 block min-h-[114px] overflow-hidden rounded-2xl px-4 py-4 ${
-          currentPromo.theme === "affiliate" ? "bg-[#E8F4EA]" : "bg-[#FFF0C9]"
-        }`}
-      >
+      <PromoLink promo={currentPromo}>
         <div className="absolute -right-7 -top-7 h-20 w-20 rounded-full border-[18px] border-[#17B869]" />
         <div className="absolute -right-4 bottom-2 h-16 w-16 rounded-full border-[16px] border-[#18A9C7]" />
         <div className="absolute right-12 -top-3 h-12 w-12 rounded-full border-[12px] border-[#F4A51C]" />
@@ -136,14 +131,14 @@ function Home() {
         <div className="absolute bottom-2 right-4 z-10 flex gap-1">
           {promoSlides.map((slide, index) => (
             <span
-              key={slide.to}
+              key={slide.href ?? slide.to}
               className={`h-1.5 rounded-full transition-all ${
                 index === activeSlide ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25"
               }`}
             />
           ))}
         </div>
-      </Link>
+      </PromoLink>
 
       <div className="mt-7 space-y-6">
         {status && <p className="px-6 text-sm text-muted-foreground">{status}</p>}
@@ -172,5 +167,36 @@ function Home() {
       </div>
 
     </MobileShell>
+  );
+}
+
+type PromoSlide = {
+  greeting: string;
+  message: string;
+  ctaLabel: string;
+  to?: "/free-delivery";
+  href?: string;
+  theme: string;
+};
+
+function promoClassName(theme: string) {
+  return `relative mx-5 mt-5 block min-h-[114px] overflow-hidden rounded-2xl px-4 py-4 ${
+    theme === "affiliate" ? "bg-[#E8F4EA]" : "bg-[#FFF0C9]"
+  }`;
+}
+
+function PromoLink({ promo, children }: { promo: PromoSlide; children: React.ReactNode }) {
+  if (promo.href) {
+    return (
+      <a href={promo.href} className={promoClassName(promo.theme)}>
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link to={promo.to ?? "/free-delivery"} className={promoClassName(promo.theme)}>
+      {children}
+    </Link>
   );
 }
