@@ -8,6 +8,7 @@ const configuredOrigins = (process.env.APP_ORIGIN ?? "http://localhost:5173")
   .filter(Boolean);
 
 const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
+const productionAppUrl = "https://collectibles-vite.vercel.app";
 
 const appOrigins = Array.from(
   new Set(
@@ -15,7 +16,7 @@ const appOrigins = Array.from(
       ...configuredOrigins,
       vercelOrigin,
       "https://collectib.muyeezadefila29.workers.dev",
-      "https://collectibles-vite.vercel.app",
+      productionAppUrl,
       "http://localhost:5173",
       "http://127.0.0.1:5173",
     ].filter(Boolean),
@@ -34,7 +35,11 @@ export const config = {
   flutterwaveSecretHash: process.env.FLUTTERWAVE_SECRET_HASH ?? "",
   flutterwaveSecretKey: process.env.FLUTTERWAVE_SECRET_KEY ?? "",
   paymentRedirectUrl: process.env.PAYMENT_REDIRECT_URL ?? "",
-  publicAppUrl: process.env.PUBLIC_APP_URL ?? configuredOrigins[0] ?? "http://localhost:5173",
+  publicAppUrl:
+    process.env.PUBLIC_APP_URL ??
+    vercelOrigin ??
+    (process.env.NODE_ENV === "production" ? productionAppUrl : configuredOrigins[0]) ??
+    "http://localhost:5173",
   cronSecret: process.env.CRON_SECRET ?? "",
   adminWallets: (process.env.ADMIN_WALLETS ?? "")
     .split(",")

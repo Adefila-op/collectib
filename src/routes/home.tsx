@@ -27,7 +27,7 @@ function Home() {
   useEffect(() => {
     getArtworks()
       .then((response) => {
-        setArtworks(response.artworks.slice(0, 6));
+        setArtworks(response.artworks.slice(0, 12));
         setStatus(response.artworks.length ? "" : "No marketplace artworks yet.");
       })
       .catch((error) => {
@@ -75,6 +75,12 @@ function Home() {
     [memberName, promoBanner],
   );
   const currentPromo = promoSlides[activeSlide % promoSlides.length];
+  const firstArtworkRow = artworks.slice(0, Math.ceil(artworks.length / 2));
+  const secondArtworkRow = artworks.slice(Math.ceil(artworks.length / 2));
+  const artworkRows = [
+    { title: "Trending Artworks", action: "View all", items: firstArtworkRow },
+    { title: "Collector Picks", action: "Explore", items: secondArtworkRow },
+  ];
 
   return (
     <MobileShell>
@@ -139,24 +145,30 @@ function Home() {
         </div>
       </Link>
 
-      <div className="mt-7">
-        <SectionHeader title="Trending Artworks" action="View all" to="/trending" />
-        <div className="flex gap-3 overflow-x-auto no-scrollbar px-5 pb-2">
-          {status && <p className="text-sm text-muted-foreground px-1">{status}</p>}
-          {artworks.map((artwork, i) => (
-            <div key={artwork.id} className="w-40 shrink-0">
-              <ArtworkCard
-                id={artwork.id}
-                title={artwork.title}
-                artist={artwork.artists?.name ?? "Independent artist"}
-                price={formatLocalPrice(artwork.price_amount, artwork.price_currency)}
-                variant={i}
-                imageUrl={artwork.image_url}
-                assetStatus={artwork.status}
-              />
-            </div>
-          ))}
-        </div>
+      <div className="mt-7 space-y-6">
+        {status && <p className="px-6 text-sm text-muted-foreground">{status}</p>}
+        {artworkRows.map((row, rowIndex) =>
+          row.items.length ? (
+            <section key={row.title}>
+              <SectionHeader title={row.title} action={row.action} to="/trending" />
+              <div className="flex gap-3 overflow-x-auto no-scrollbar px-5 pb-2">
+                {row.items.map((artwork, index) => (
+                  <div key={artwork.id} className="w-40 shrink-0">
+                    <ArtworkCard
+                      id={artwork.id}
+                      title={artwork.title}
+                      artist={artwork.artists?.name ?? "Independent artist"}
+                      price={formatLocalPrice(artwork.price_amount, artwork.price_currency)}
+                      variant={rowIndex * 6 + index}
+                      imageUrl={artwork.image_url}
+                      assetStatus={artwork.status}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null,
+        )}
       </div>
 
     </MobileShell>
