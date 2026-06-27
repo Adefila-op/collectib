@@ -51,6 +51,7 @@ export function InstallGate({ children }: { children: ReactNode }) {
     media.addEventListener("change", updateMode);
 
     const handleBeforeInstallPrompt = (event: Event) => {
+      if (!isMobileDevice() || isStandalone()) return;
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };

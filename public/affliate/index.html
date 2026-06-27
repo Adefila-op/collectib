@@ -389,6 +389,17 @@
       async function finishAuth(response) {
         if (response.token) {
           localStorage.setItem(AUTH_TOKEN_KEY, response.token);
+          try {
+            await apiFetch("/api/affiliates/me");
+          } catch (error) {
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+            setStatus(
+              error instanceof Error
+                ? error.message
+                : "This email is not registered for the affiliate network.",
+            );
+            return;
+          }
           window.location.href = "/affliates/";
           return;
         }
@@ -432,6 +443,9 @@
 
       const leadFromUrl = new URLSearchParams(window.location.search).get("lead");
       if (leadFromUrl) document.querySelector("#affiliate-lead-code").value = leadFromUrl;
+
+      const message = new URLSearchParams(window.location.search).get("message");
+      if (message) setStatus(message);
     </script>
   </body>
 </html>

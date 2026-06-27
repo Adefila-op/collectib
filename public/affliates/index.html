@@ -453,6 +453,13 @@
         font-weight: 750;
       }
 
+      .mini-button:disabled {
+        border-color: var(--line);
+        background: #f3f6fa;
+        color: var(--muted);
+        cursor: not-allowed;
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
@@ -572,6 +579,22 @@
       .status-row.paid {
         border: 1px solid #cfe0ff;
         background: #f0f6ff;
+      }
+
+      .approval-banner {
+        display: none;
+        margin: 0 0 16px;
+        border: 1px solid #fde6b8;
+        border-radius: 8px;
+        background: #fff8eb;
+        color: #7c4a03;
+        padding: 14px 18px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .approval-banner.show {
+        display: block;
       }
 
       .quick {
@@ -704,6 +727,10 @@
             </div>
           </div>
         </header>
+
+        <section class="approval-banner" id="approval-banner">
+          Your affiliate account is pending approval. You can preview the dashboard now, and selling links unlock after admin approval.
+        </section>
 
         <section class="stats" aria-label="Affiliate statistics" id="stats-panel">
           <article class="stat">
@@ -856,6 +883,7 @@
           paidCommission: 0,
         },
         commissionRate: COMMISSION_RATE,
+        authError: "",
       };
 
       const $ = (selector) => document.querySelector(selector);
@@ -967,6 +995,7 @@
             const artist = art.artists?.name || "Collectibles artist";
             const price = toNumber(art.price_amount);
             const image = escapeAttr(resolveImage(art.image_url));
+            const pending = state.account?.status !== "approved";
             return `
               <article class="art-card">
                 <img class="art-image" src="${image}" alt="" onerror="this.removeAttribute('src')" />
@@ -977,7 +1006,7 @@
                     <div><span>Artwork Price</span><strong>${fmtMoney(price, art.price_currency || "USD")}</strong></div>
                     <div><span>Commission</span><strong>${fmtMoney(price * COMMISSION_RATE, art.price_currency || "USD")}</strong></div>
                   </div>
-                  <button class="mini-button" data-add-campaign="${escapeAttr(art.id)}">Sell Artwork</button>
+                  <button class="mini-button" data-add-campaign="${escapeAttr(art.id)}" ${pending ? "disabled" : ""}>${pending ? "Pending Approval" : "Sell Artwork"}</button>
                 </div>
               </article>
             `;
@@ -1137,6 +1166,7 @@
         renderChart();
         bindCopyButtons();
         $("#auth-panel").classList.toggle("show", !state.account);
+        $("#approval-banner").classList.toggle("show", state.account?.status === "pending");
       }
 
       function bindCopyButtons() {
@@ -1145,6 +1175,7 @@
         });
         document.querySelectorAll("[data-add-campaign]").forEach((button) => {
           button.onclick = async () => {
+            if (button.disabled) return;
             try {
               await apiFetch("/api/affiliates/campaigns", {
                 method: "POST",
@@ -1174,12 +1205,20 @@
           state.team = response.team || [];
           state.stats = response.stats || state.stats;
           state.commissionRate = response.commissionRate || COMMISSION_RATE;
-        } catch {
+        } catch (error) {
           state.account = null;
           state.profile = null;
           state.artworks = [];
           state.campaigns = [];
           state.commissions = [];
+          state.authError =
+            error instanceof Error ? error.message : "Could not load affiliate dashboard.";
+          if (token()) {
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+            window.location.href =
+              "/affliate/?message=" + encodeURIComponent(state.authError);
+            return;
+          }
         } finally {
           if (!state.account && !token()) {
             window.location.href = "/affliate/";
