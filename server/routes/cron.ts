@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
+import { releaseStaleOrderReservations } from "./orders.js";
 
 const router = Router();
 
@@ -17,6 +18,20 @@ router.get("/supabase-ping", async (req, res, next) => {
     if (error) throw error;
 
     return res.json({ ok: true, checkedAt: new Date().toISOString() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.all("/release-stale-orders", async (req, res, next) => {
+  try {
+    const cronSecret = requireEnv("cronSecret");
+    if (req.header("x-cron-secret") !== cronSecret && req.query.secret !== cronSecret) {
+      return res.status(401).json({ error: "Invalid cron secret." });
+    }
+
+    const result = await releaseStaleOrderReservations();
+    return res.json({ ok: true, ...result, checkedAt: new Date().toISOString() });
   } catch (error) {
     next(error);
   }

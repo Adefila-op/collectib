@@ -117,10 +117,11 @@ export type Order = {
   affiliate_code?: string | null;
   amount: number | string;
   currency: "USD" | "USDC" | "SOL";
-  payment_provider: "wallet" | "flutterwave" | "moonpay";
+  payment_provider: "wallet" | "flutterwave";
   payment_reference?: string | null;
   settlement_signature?: string | null;
   status: string;
+  expires_at?: string | null;
   created_at?: string;
   artworks?: {
     title?: string | null;
@@ -531,12 +532,18 @@ export function getOrders() {
 
 export function createOrder(payload: {
   artworkId: string;
-  paymentProvider: "wallet" | "flutterwave" | "moonpay";
+  paymentProvider: "wallet" | "flutterwave";
   affiliateCode?: string;
 }) {
   return request<{ order: Order }>("/api/orders", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function cancelOrder(orderId: string) {
+  return request<{ order: Order }>(`/api/orders/${encodeURIComponent(orderId)}/cancel`, {
+    method: "POST",
   });
 }
 

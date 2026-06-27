@@ -8,10 +8,13 @@ import { attachAffiliateToOrder, markAffiliateOrderPaid } from "./affiliates.js"
 import type { AuthedRequest } from "../types.js";
 
 const router = Router();
+const ORDER_RESERVATION_TTL_MS = 30 * 60 * 1000;
+const ORDER_RESERVATION_STATUSES = ["pending", "payment_review", "crypto_submitted"] as const;
+const ORDER_BLOCKING_STATUSES = [...ORDER_RESERVATION_STATUSES, "paid"] as const;
 
 const orderSchema = z.object({
   artworkId: z.string().uuid(),
-  paymentProvider: z.enum(["wallet", "flutterwave", "moonpay"]),
+  paymentProvider: z.enum(["wallet", "flutterwave"]),
   paymentReference: z.string().optional(),
   affiliateCode: z.string().trim().max(32).optional(),
 });
@@ -45,6 +48,14 @@ type CryptoOrderRow = {
   payment_provider: string;
 };
 
+type ActiveOrderRow = {
+  id: string;
+  artwork_id: string;
+  status: string;
+  created_at?: string | null;
+  expires_at?: string | null;
+};
+
 type FlutterwavePaymentResponse = {
   status?: string;
   message?: string;
@@ -69,6 +80,98 @@ function paymentSuccessUrl(txRef: string) {
   const url = new URL(base);
   url.searchParams.set("tx_ref", txRef);
   return url.toString();
+}
+
+function orderExpiresAt() {
+  return new Date(Date.now() + ORDER_RESERVATION_TTL_MS).toISOString();
+}
+
+function isOrderExpired(order: ActiveOrderRow, now = Date.now()) {
+  const expiresAt = order.expires_at ? new Date(order.expires_at).getTime() : Number.NaN;
+  if (Number.isFinite(expiresAt)) return expiresAt <= now;
+  const createdAt = order.created_at ? new Date(order.created_at).getTime() : Number.NaN;
+  return Number.isFinite(createdAt) && createdAt + ORDER_RESERVATION_TTL_MS <= now;
+}
+
+async function releaseArtworkIfUnblocked(
+  supabase: ReturnType<typeof getSupabase>,
+  artworkId: string,
+) {
+  const { data: remaining, error } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("artwork_id", artworkId)
+    .in("status", [...ORDER_BLOCKING_STATUSES])
+    .limit(1);
+
+  if (error) throw error;
+  if (remaining?.length) return;
+
+  const { error: artworkError } = await supabase
+    .from("artworks")
+    .update({ status: "listed", updated_at: new Date().toISOString() })
+    .eq("id", artworkId)
+    .eq("status", "reserved");
+
+  if (artworkError) throw artworkError;
+}
+
+async function expireOrder(
+  supabase: ReturnType<typeof getSupabase>,
+  order: ActiveOrderRow,
+) {
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      status: "failed",
+      payment_payload: {
+        reason: "reservation_expired",
+        expiredAt: new Date().toISOString(),
+      },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", order.id)
+    .in("status", [...ORDER_RESERVATION_STATUSES]);
+
+  if (error) throw error;
+  await releaseArtworkIfUnblocked(supabase, order.artwork_id);
+}
+
+async function releaseStaleOrdersForArtwork(
+  supabase: ReturnType<typeof getSupabase>,
+  artworkId: string,
+) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id, artwork_id, status, created_at, expires_at")
+    .eq("artwork_id", artworkId)
+    .in("status", [...ORDER_RESERVATION_STATUSES]);
+
+  if (error) throw error;
+
+  const staleOrders = ((data ?? []) as ActiveOrderRow[]).filter((order) => isOrderExpired(order));
+  for (const order of staleOrders) {
+    await expireOrder(supabase, order);
+  }
+
+  return staleOrders.length;
+}
+
+export async function releaseStaleOrderReservations() {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id, artwork_id, status, created_at, expires_at")
+    .in("status", [...ORDER_RESERVATION_STATUSES]);
+
+  if (error) throw error;
+
+  const staleOrders = ((data ?? []) as ActiveOrderRow[]).filter((order) => isOrderExpired(order));
+  for (const order of staleOrders) {
+    await expireOrder(supabase, order);
+  }
+
+  return { released: staleOrders.length };
 }
 
 router.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -98,14 +201,23 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
     if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });
 
     const supabase = getSupabase();
-    const { data: artwork, error: artworkError } = await supabase
+    const { error: artworkError } = await supabase
       .from("artworks")
       .select("seller_profile_id, price_amount, price_currency, status")
       .eq("id", payload.artworkId)
       .single();
 
     if (artworkError) throw artworkError;
-    const listedArtwork = artwork as OrderArtworkRow;
+    await releaseStaleOrdersForArtwork(supabase, payload.artworkId);
+
+    const { data: refreshedArtwork, error: refreshedArtworkError } = await supabase
+      .from("artworks")
+      .select("seller_profile_id, price_amount, price_currency, status")
+      .eq("id", payload.artworkId)
+      .single();
+
+    if (refreshedArtworkError) throw refreshedArtworkError;
+    const listedArtwork = refreshedArtwork as OrderArtworkRow;
     if (listedArtwork.status !== "listed") {
       return res.status(409).json({ error: "This artwork is no longer available." });
     }
@@ -117,7 +229,7 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
       .from("orders")
       .select("id")
       .eq("artwork_id", payload.artworkId)
-      .in("status", ["pending", "payment_review", "crypto_submitted", "paid"])
+      .in("status", [...ORDER_BLOCKING_STATUSES])
       .maybeSingle();
 
     if (existingOrderError) throw existingOrderError;
@@ -139,6 +251,7 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
         payment_provider: payload.paymentProvider,
         payment_reference: paymentReference,
         status: "pending",
+        expires_at: orderExpiresAt(),
       })
       .select("*")
       .single();
@@ -164,6 +277,49 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
     }
 
     return res.status(201).json({ order: data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/:id/cancel", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const profileId = req.user?.sub;
+    if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });
+
+    const supabase = getSupabase();
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id, artwork_id, buyer_profile_id, status")
+      .eq("id", req.params.id)
+      .single();
+
+    if (orderError) throw orderError;
+    const cancellableOrder = order as ActiveOrderRow & { buyer_profile_id: string };
+    if (cancellableOrder.buyer_profile_id !== profileId) {
+      return res.status(403).json({ error: "You can only cancel your own order." });
+    }
+    if (!ORDER_RESERVATION_STATUSES.includes(cancellableOrder.status as (typeof ORDER_RESERVATION_STATUSES)[number])) {
+      return res.status(409).json({ error: "This order can no longer be cancelled." });
+    }
+
+    const { data: updated, error } = await supabase
+      .from("orders")
+      .update({
+        status: "cancelled",
+        payment_payload: {
+          reason: "buyer_cancelled",
+          cancelledAt: new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", cancellableOrder.id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    await releaseArtworkIfUnblocked(supabase, cancellableOrder.artwork_id);
+    return res.json({ order: updated });
   } catch (error) {
     next(error);
   }

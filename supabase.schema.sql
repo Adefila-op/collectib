@@ -170,6 +170,7 @@ create table if not exists orders (
   payment_payload jsonb,
   settlement_signature text,
   status text not null default 'pending',
+  expires_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -278,6 +279,7 @@ create index if not exists offers_artwork_status_idx on offers(artwork_id, statu
 create index if not exists offers_expires_idx on offers(expires_at) where status = 'active';
 create index if not exists orders_buyer_idx on orders(buyer_profile_id, created_at desc);
 create index if not exists orders_affiliate_idx on orders(affiliate_profile_id, created_at desc);
+create index if not exists orders_expiry_idx on orders(status, expires_at);
 create index if not exists sales_artwork_created_idx on sales(artwork_id, created_at desc);
 create index if not exists price_history_artwork_created_idx on price_history(artwork_id, created_at desc);
 create index if not exists webhook_events_provider_idx on webhook_events(provider, created_at desc);
@@ -627,7 +629,7 @@ do $$
 begin
   alter table orders
     add constraint orders_payment_provider_check
-    check (payment_provider in ('wallet', 'flutterwave', 'moonpay'));
+    check (payment_provider in ('wallet', 'flutterwave'));
 exception
   when duplicate_object then null;
 end $$;

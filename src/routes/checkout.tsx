@@ -3,6 +3,7 @@ import { useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton, SecondaryButton } from "@/components/art-ui";
 import {
+  cancelOrder,
   createOrder,
   getWalletAddress,
   startFlutterwaveCheckout,
@@ -66,6 +67,21 @@ function Checkout() {
     }
   };
 
+  const cancelCurrentOrder = async () => {
+    if (!order || isBusy) return;
+    setIsBusy(true);
+    setStatus("");
+    try {
+      const cancelled = await cancelOrder(order.id);
+      setOrder(cancelled.order);
+      setStatus("Order cancelled. The artwork reservation has been released.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not cancel order.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-28">
       <StatusBar />
@@ -108,6 +124,14 @@ function Checkout() {
                 <p className="font-semibold">{order.payment_reference ?? order.id}</p>
                 <p className="mt-2 text-muted-foreground">Status</p>
                 <p className="font-semibold capitalize">{order.status.replace(/_/g, " ")}</p>
+                {["pending", "payment_review", "crypto_submitted"].includes(order.status) && (
+                  <button
+                    onClick={cancelCurrentOrder}
+                    className="mt-3 w-full py-2 rounded-xl border border-border bg-surface text-sm font-semibold"
+                  >
+                    Cancel order
+                  </button>
+                )}
               </div>
             )}
 

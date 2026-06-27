@@ -181,7 +181,7 @@ router.post("/:id/wallet-payment", requireAuth, async (req: AuthedRequest, res, 
     const { data, error } = await supabase
       .from("offers")
       .update({
-        status: "active",
+        status: "payment_review",
         offeror_wallet: payload.walletAddress,
         settlement_signature: payload.txSignature,
         payment_payload: {
@@ -196,7 +196,6 @@ router.post("/:id/wallet-payment", requireAuth, async (req: AuthedRequest, res, 
       .single();
 
     if (error) throw error;
-    await recalculateArtworkMarketValue(existingOffer.artwork_id, "offer_created", existingOffer.id);
 
     return res.json({ offer: data });
   } catch (error) {
