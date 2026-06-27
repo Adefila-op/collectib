@@ -43,8 +43,171 @@
       .page {
         display: grid;
         min-height: 100vh;
-        place-items: center;
         padding: 0;
+      }
+
+      .screen-hidden {
+        display: none !important;
+      }
+
+      .landing-screen {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(520px, 0.95fr) minmax(560px, 1.05fr);
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 90% 16%, rgba(93, 53, 246, 0.12), transparent 28%),
+          linear-gradient(90deg, #ffffff 0 48%, #f8f6ff 100%);
+      }
+
+      .landing-copy {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 46px clamp(44px, 5vw, 76px);
+      }
+
+      .landing-copy .brand {
+        position: absolute;
+        left: clamp(44px, 5vw, 76px);
+        top: 48px;
+        margin: 0;
+      }
+
+      .landing-actions {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin: 26px 0 42px;
+      }
+
+      .hero-button {
+        display: inline-grid;
+        grid-template-columns: 1fr 72px;
+        align-items: center;
+        min-width: 340px;
+        min-height: 78px;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #7558ff, #823af4);
+        color: #fff;
+        overflow: hidden;
+        padding: 0;
+        font-size: 28px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 24px 44px rgba(93, 53, 246, 0.24);
+      }
+
+      .hero-button span:first-child {
+        padding-left: 36px;
+      }
+
+      .hero-button span:last-child {
+        display: grid;
+        place-items: center;
+        height: 100%;
+        background: rgba(84, 35, 212, 0.18);
+        font-size: 40px;
+      }
+
+      .secondary-link {
+        min-height: 46px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--primary);
+        padding: 0 22px;
+        font-weight: 820;
+        cursor: pointer;
+      }
+
+      .landing-perks {
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        gap: 28px;
+        align-items: center;
+      }
+
+      .landing-perk {
+        display: grid;
+        grid-template-columns: 44px auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .landing-perk + .landing-perk {
+        border-left: 1px solid #aeb4c4;
+        padding-left: 28px;
+      }
+
+      .landing-icon {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        color: #fff;
+        font-weight: 950;
+      }
+
+      .landing-perk strong,
+      .landing-perk span {
+        display: block;
+      }
+
+      .landing-perk strong {
+        font-size: 16px;
+      }
+
+      .landing-perk span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .landing-dots {
+        position: absolute;
+        left: clamp(44px, 5vw, 76px);
+        bottom: 34px;
+        display: flex;
+        gap: 10px;
+      }
+
+      .landing-dot,
+      .top-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      }
+
+      .landing-visual {
+        position: relative;
+        overflow: hidden;
+        min-height: 100vh;
+      }
+
+      .landing-visual::before {
+        position: absolute;
+        inset: 0;
+        background-image: url("/assets/affiliate-landing.png");
+        background-position: right center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        content: "";
+      }
+
+      .top-dots {
+        position: absolute;
+        right: 54px;
+        top: 54px;
+        z-index: 2;
+        display: flex;
+        gap: 14px;
       }
 
       .shell {
@@ -53,7 +216,7 @@
         grid-template-columns: minmax(440px, 0.92fr) minmax(560px, 1.08fr);
         width: 100%;
         min-height: 100vh;
-        --visual-image: url("/assets/affiliate-signin.jpg");
+        --visual-image: url("/assets/affiliate-landing.png");
         overflow: hidden;
         background: rgba(255, 255, 255, 0.94);
       }
@@ -281,25 +444,14 @@
         position: absolute;
         inset: 0;
         background-image: var(--visual-image);
-        background-position: center;
+        background-position: right center;
         background-repeat: no-repeat;
-        background-size: cover;
+        background-size: auto 100%;
         content: "";
       }
 
       .visual-card {
-        position: absolute;
-        right: 54px;
-        bottom: 54px;
-        display: grid;
-        grid-template-columns: repeat(3, auto);
-        gap: 22px;
-        align-items: center;
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.88);
-        padding: 18px 22px;
-        box-shadow: 0 18px 48px rgba(24, 22, 54, 0.16);
-        backdrop-filter: blur(18px);
+        display: none;
       }
 
       .perk {
@@ -337,6 +489,40 @@
       }
 
       @media (max-width: 1040px) {
+        .landing-screen {
+          grid-template-columns: 1fr;
+        }
+
+        .landing-copy {
+          min-height: 100vh;
+          padding: 120px 24px 44px;
+        }
+
+        .landing-copy .brand {
+          left: 24px;
+          top: 34px;
+        }
+
+        .landing-visual {
+          display: none;
+        }
+
+        .landing-perks {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .landing-perk + .landing-perk {
+          border-left: 0;
+          padding-left: 0;
+        }
+
+        .hero-button {
+          min-width: 0;
+          width: 100%;
+          font-size: 24px;
+        }
+
         .page {
           padding: 0;
         }
@@ -367,7 +553,50 @@
   </head>
   <body>
     <main class="page">
-      <section class="shell">
+      <section class="landing-screen" id="landing-screen">
+        <div class="landing-copy">
+          <p class="brand"><span class="brand-mark">CA</span> Collectibles <span>Affiliate</span></p>
+          <h1>Make up to <span>100k</span> from home, selling <span>Art</span></h1>
+          <p class="intro">
+            Join our affiliate program and earn high commissions by promoting unique digital and physical artwork.
+          </p>
+          <div class="landing-actions">
+            <button class="hero-button" type="button" data-open-auth="signup">
+              <span>Get started</span>
+              <span>→</span>
+            </button>
+            <button class="secondary-link" type="button" data-open-auth="login">Sign in</button>
+          </div>
+          <div class="landing-perks" aria-label="Affiliate benefits">
+            <div class="landing-perk">
+              <span class="landing-icon">$</span>
+              <div><strong>High Commissions</strong><span>Earn up to 30%</span></div>
+            </div>
+            <div class="landing-perk">
+              <span class="landing-icon">L</span>
+              <div><strong>Dedicated Support</strong><span>We&apos;re here to help</span></div>
+            </div>
+            <div class="landing-perk">
+              <span class="landing-icon">P</span>
+              <div><strong>Fast Payouts</strong><span>Get paid on time</span></div>
+            </div>
+          </div>
+          <div class="landing-dots" aria-hidden="true">
+            <span class="landing-dot"></span>
+            <span class="landing-dot"></span>
+            <span class="landing-dot"></span>
+          </div>
+        </div>
+        <div class="landing-visual" aria-hidden="true">
+          <div class="top-dots">
+            <span class="top-dot"></span>
+            <span class="top-dot"></span>
+            <span class="top-dot"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell screen-hidden" id="auth-screen">
         <div class="auth-side">
           <p class="brand"><span class="brand-mark">CA</span> Collectibles <span>Affiliate</span></p>
 
@@ -458,6 +687,8 @@
 
     <script>
       const AUTH_TOKEN_KEY = "collectibles.authToken";
+      const landingScreen = document.querySelector("#landing-screen");
+      const authScreen = document.querySelector("#auth-screen");
       const status = document.querySelector("#status");
       const resendButton = document.querySelector("#resend-button");
       const modeButtons = document.querySelectorAll("[data-mode]");
@@ -482,6 +713,17 @@
       let lastEmail = "";
       let selectedRole = "affiliate";
 
+      function showLanding() {
+        landingScreen.classList.remove("screen-hidden");
+        authScreen.classList.add("screen-hidden");
+      }
+
+      function showAuth(mode = "login") {
+        landingScreen.classList.add("screen-hidden");
+        authScreen.classList.remove("screen-hidden");
+        setMode(mode);
+      }
+
       function setStatus(message, canResend = false) {
         status.textContent = message;
         resendButton.classList.toggle("show", Boolean(canResend && lastEmail));
@@ -493,7 +735,7 @@
         signupForm.classList.toggle("active", mode === "signup");
         document.querySelector(".shell").style.setProperty(
           "--visual-image",
-          mode === "signup" ? 'url("/assets/affiliate-signup.jpg")' : 'url("/assets/affiliate-signin.jpg")',
+          'url("/assets/affiliate-landing.png")',
         );
         document.querySelector("#eyebrow").textContent = copy[mode].eyebrow;
         document.querySelector("#headline").innerHTML = copy[mode].headline;
@@ -545,6 +787,10 @@
 
       modeButtons.forEach((button) => {
         button.addEventListener("click", () => setMode(button.dataset.mode));
+      });
+
+      document.querySelectorAll("[data-open-auth]").forEach((button) => {
+        button.addEventListener("click", () => showAuth(button.dataset.openAuth));
       });
 
       roleSelect.addEventListener("change", () => setRole(roleSelect.value));
@@ -640,12 +886,18 @@
       const leadFromUrl = params.get("lead");
       if (leadFromUrl) {
         leadCodeInput.value = leadFromUrl;
-        setMode("signup");
+        showAuth("signup");
         setRole("affiliate");
       }
 
       const message = params.get("message");
-      if (message) setStatus(message);
+      if (message) {
+        showAuth("login");
+        setStatus(message);
+      }
+
+      if (params.get("mode") === "signup") showAuth("signup");
+      if (params.get("mode") === "login") showAuth("login");
     </script>
   </body>
 </html>
