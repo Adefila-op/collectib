@@ -181,6 +181,7 @@ create table if not exists affiliate_accounts (
   status text not null default 'approved',
   affiliate_code text unique not null,
   phone text,
+  community_name text,
   joined_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

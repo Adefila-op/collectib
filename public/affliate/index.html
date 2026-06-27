@@ -35,7 +35,8 @@
       }
 
       button,
-      input {
+      input,
+      select {
         font: inherit;
       }
 
@@ -43,21 +44,18 @@
         display: grid;
         min-height: 100vh;
         place-items: center;
-        padding: 28px;
+        padding: 0;
       }
 
       .shell {
         position: relative;
         display: grid;
-        grid-template-columns: minmax(380px, 0.82fr) minmax(520px, 1fr);
-        width: min(1280px, 100%);
-        min-height: 760px;
+        grid-template-columns: minmax(440px, 0.92fr) minmax(560px, 1.08fr);
+        width: 100%;
+        min-height: 100vh;
         --visual-image: url("/assets/affiliate-signin.jpg");
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        border-radius: 8px;
         background: rgba(255, 255, 255, 0.94);
-        box-shadow: var(--shadow);
       }
 
       .auth-side {
@@ -65,14 +63,15 @@
         z-index: 2;
         display: flex;
         flex-direction: column;
-        padding: 54px 58px 42px;
+        justify-content: center;
+        padding: 42px clamp(42px, 5vw, 76px);
       }
 
       .brand {
         display: inline-flex;
         align-items: center;
         gap: 12px;
-        margin: 0 0 74px;
+        margin: 0 0 54px;
         color: var(--text);
         font-size: 24px;
         font-weight: 850;
@@ -128,18 +127,21 @@
       }
 
       .mode-tabs,
-      .role-tabs {
+      .form-select {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
         margin-bottom: 16px;
+      }
+
+      .mode-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         border-radius: 8px;
         background: #f6f3ff;
         padding: 5px;
       }
 
-      .mode-tabs button,
-      .role-tabs button {
+      .mode-tabs button {
         min-height: 42px;
         border: 0;
         border-radius: 7px;
@@ -149,8 +151,7 @@
         cursor: pointer;
       }
 
-      .mode-tabs button.active,
-      .role-tabs button.active {
+      .mode-tabs button.active {
         background: #ffffff;
         color: var(--primary);
         box-shadow: 0 10px 24px rgba(60, 47, 122, 0.09);
@@ -169,7 +170,8 @@
         position: relative;
       }
 
-      .field input {
+      .field input,
+      .field select {
         width: 100%;
         min-height: 58px;
         border: 1px solid var(--line);
@@ -180,7 +182,13 @@
         outline: none;
       }
 
-      .field input:focus {
+      .field select {
+        appearance: none;
+        cursor: pointer;
+      }
+
+      .field input:focus,
+      .field select:focus {
         border-color: rgba(93, 53, 246, 0.54);
         box-shadow: 0 0 0 4px rgba(93, 53, 246, 0.1);
       }
@@ -263,6 +271,7 @@
       .visual-side {
         position: relative;
         min-height: 100%;
+        overflow: hidden;
         background:
           radial-gradient(circle at 82% 50%, #6138f4 0 35%, transparent 35.4%),
           linear-gradient(90deg, rgba(255, 255, 255, 0), #f8f6ff);
@@ -272,7 +281,7 @@
         position: absolute;
         inset: 0;
         background-image: var(--visual-image);
-        background-position: center right;
+        background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
         content: "";
@@ -392,10 +401,13 @@
           </form>
 
           <form id="signup-form">
-            <div class="role-tabs" aria-label="Affiliate user type">
-              <button class="active" type="button" data-role="affiliate">Affiliate</button>
-              <button type="button" data-role="lead">Lead affiliate</button>
-            </div>
+            <label class="field">
+              <span>?</span>
+              <select name="role" id="role-select" aria-label="User type">
+                <option value="affiliate">Affiliate</option>
+                <option value="lead">Lead affiliate</option>
+              </select>
+            </label>
             <label class="field">
               <span>*</span>
               <input name="fullName" placeholder="Full name" autocomplete="name" required />
@@ -407,6 +419,10 @@
             <label class="field">
               <span>+</span>
               <input name="phone" placeholder="Phone number" autocomplete="tel" />
+            </label>
+            <label class="field" id="community-name-field">
+              <span>C</span>
+              <input name="communityName" placeholder="Community name you own" autocomplete="organization" />
             </label>
             <label class="field">
               <span>#</span>
@@ -445,10 +461,11 @@
       const status = document.querySelector("#status");
       const resendButton = document.querySelector("#resend-button");
       const modeButtons = document.querySelectorAll("[data-mode]");
-      const roleButtons = document.querySelectorAll("[data-role]");
+      const roleSelect = document.querySelector("#role-select");
       const loginForm = document.querySelector("#login-form");
       const signupForm = document.querySelector("#signup-form");
       const leadCodeField = document.querySelector("#lead-code-field");
+      const communityNameField = document.querySelector("#community-name-field");
       const leadCodeInput = document.querySelector("#affiliate-lead-code");
       const copy = {
         login: {
@@ -486,8 +503,9 @@
 
       function setRole(role) {
         selectedRole = role;
-        roleButtons.forEach((button) => button.classList.toggle("active", button.dataset.role === role));
+        roleSelect.value = role;
         leadCodeField.style.display = role === "affiliate" ? "block" : "none";
+        communityNameField.style.display = role === "affiliate" ? "block" : "none";
       }
 
       function canResendFromMessage(message) {
@@ -529,9 +547,7 @@
         button.addEventListener("click", () => setMode(button.dataset.mode));
       });
 
-      roleButtons.forEach((button) => {
-        button.addEventListener("click", () => setRole(button.dataset.role));
-      });
+      roleSelect.addEventListener("change", () => setRole(roleSelect.value));
 
       loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -573,6 +589,7 @@
               fullName: data.get("fullName"),
               email: data.get("email"),
               phone: data.get("phone") || undefined,
+              communityName: selectedRole === "affiliate" ? data.get("communityName") || undefined : undefined,
               password,
               role: selectedRole,
               leadCode: selectedRole === "affiliate" ? data.get("leadCode") || leadFromUrl || undefined : undefined,

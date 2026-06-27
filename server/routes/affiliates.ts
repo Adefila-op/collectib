@@ -39,6 +39,7 @@ const registerSchema = z.object({
   password: z.string().min(8).max(128),
   phone: z.string().trim().max(40).optional(),
   role: z.enum(["affiliate", "lead"]).default("affiliate"),
+  communityName: z.string().trim().max(100).optional(),
   leadCode: z.string().trim().max(32).optional(),
 });
 
@@ -66,6 +67,7 @@ type AffiliateAccountRow = {
   status: "pending" | "approved" | "suspended";
   affiliate_code: string;
   phone?: string | null;
+  community_name?: string | null;
   profiles?: ProfileRow | null;
 };
 
@@ -205,6 +207,7 @@ async function upsertAffiliateAccount(payload: {
   role: "affiliate" | "lead";
   leadProfileId?: string | null;
   phone?: string | null;
+  communityName?: string | null;
 }) {
   const supabase = getSupabase();
   const affiliateCode = affiliateCodeFor(payload.profileId, payload.role);
@@ -218,6 +221,7 @@ async function upsertAffiliateAccount(payload: {
         status: "pending",
         affiliate_code: affiliateCode,
         phone: payload.phone ?? null,
+        community_name: payload.role === "affiliate" ? payload.communityName ?? null : null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "profile_id" },
@@ -356,6 +360,7 @@ router.post("/register", async (req, res, next) => {
           full_name: payload.fullName,
           affiliate_role: payload.role,
           lead_code: payload.leadCode ?? null,
+          community_name: payload.communityName ?? null,
         },
         emailRedirectTo: authRedirect(`/verify-email?email=${encodeURIComponent(payload.email)}`),
       },
@@ -376,6 +381,7 @@ router.post("/register", async (req, res, next) => {
       role: payload.role,
       leadProfileId,
       phone: payload.phone,
+      communityName: payload.communityName,
     });
 
     if (data.session && account.status === "approved") {
