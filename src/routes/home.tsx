@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
 import { ArtworkCard, SectionHeader } from "@/components/art-ui";
+import { Logo } from "@/components/logo";
 import {
   DEFAULT_PROMO_BANNER,
   getArtworks,
@@ -85,9 +86,12 @@ function Home() {
   return (
     <MobileShell>
       <div className="px-5 pt-2 pb-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold">collectibles</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Track holdings, offers, and orders</p>
+        <div className="flex items-center gap-2">
+          <Logo />
+          <div>
+            <h1 className="text-2xl font-extrabold">collectibles</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Track holdings, offers, and orders</p>
+          </div>
         </div>
         <Link
           to="/notifications"
