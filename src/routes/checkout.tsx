@@ -13,12 +13,13 @@ import {
 export const Route = createFileRoute("/checkout")({
   validateSearch: (search) => ({
     artworkId: typeof search.artworkId === "string" ? search.artworkId : "",
+    affiliateCode: typeof search.affiliateCode === "string" ? search.affiliateCode : "",
   }),
   component: Checkout,
 });
 
 function Checkout() {
-  const { artworkId } = Route.useSearch();
+  const { artworkId, affiliateCode } = Route.useSearch();
   const [method, setMethod] = useState<"flutterwave" | "wallet">("flutterwave");
   const [order, setOrder] = useState<Order | null>(null);
   const [txSignature, setTxSignature] = useState("");
@@ -33,6 +34,7 @@ function Checkout() {
       const created = await createOrder({
         artworkId,
         paymentProvider: method === "wallet" ? "wallet" : "flutterwave",
+        affiliateCode: affiliateCode || window.localStorage.getItem("collectibles.affiliateCode") || undefined,
       });
       setOrder(created.order);
       if (method === "flutterwave") {

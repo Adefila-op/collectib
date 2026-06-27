@@ -57,7 +57,7 @@ export function ArtworkCard({
 }) {
   const dims = { sm: "h-28", md: "h-36", lg: "h-44" }[size];
   return (
-    <Link to="/artwork/$id" params={{ id }} className="block group">
+    <Link to="/artwork/$id" params={{ id }} search={{ aff: "" }} className="block group">
       <div className={`rounded-2xl overflow-hidden ${dims} bg-muted relative`}>
         {imageUrl ? (
           <img src={imageUrl} alt="" className="w-full h-full object-cover" />

@@ -45,7 +45,7 @@ function Create() {
         metadataUri: metadataUri || undefined,
         imageUrl: finalImageUrl,
       });
-      navigate({ to: "/artwork/$id", params: { id: created.artwork.id } });
+      navigate({ to: "/artwork/$id", params: { id: created.artwork.id }, search: { aff: "" } });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not create listing.");
     } finally {

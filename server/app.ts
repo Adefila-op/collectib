@@ -13,6 +13,7 @@ import adminRoutes from "./routes/admin.js";
 import promoRoutes from "./routes/promos.js";
 import meRoutes from "./routes/me.js";
 import artistRoutes from "./routes/artists.js";
+import affiliateRoutes from "./routes/affiliates.js";
 
 export const app = express();
 
@@ -32,6 +33,7 @@ app.use(
   }),
 );
 app.use(express.json({ limit: "10mb" }));
+app.use(express.static("public"));
 
 app.get("/api/health", (_req, res) => {
   res.json({
@@ -44,6 +46,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/me", meRoutes);
 app.use("/api/artists", artistRoutes);
+app.use("/api/affiliates", affiliateRoutes);
 app.use("/api/artworks", artworkRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/orders", orderRoutes);

@@ -113,6 +113,8 @@ export type Order = {
   artwork_id: string;
   buyer_profile_id: string;
   seller_profile_id: string;
+  affiliate_profile_id?: string | null;
+  affiliate_code?: string | null;
   amount: number | string;
   currency: "USD" | "USDC" | "SOL";
   payment_provider: "wallet" | "flutterwave" | "moonpay";
@@ -480,8 +482,20 @@ export function getOrders() {
 export function createOrder(payload: {
   artworkId: string;
   paymentProvider: "wallet" | "flutterwave" | "moonpay";
+  affiliateCode?: string;
 }) {
   return request<{ order: Order }>("/api/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function recordAffiliateClick(payload: {
+  affiliateCode: string;
+  artworkId: string;
+  visitorKey?: string;
+}) {
+  return request<{ recorded: boolean }>("/api/affiliates/clicks", {
     method: "POST",
     body: JSON.stringify(payload),
   });

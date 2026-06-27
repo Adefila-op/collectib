@@ -3,6 +3,7 @@ import { z } from "zod";
 import { config, requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
 import { requireAuth } from "../middleware.js";
+import { attachAffiliateToOrder } from "./affiliates.js";
 import type { AuthedRequest } from "../types.js";
 
 const router = Router();
@@ -11,6 +12,7 @@ const orderSchema = z.object({
   artworkId: z.string().uuid(),
   paymentProvider: z.enum(["wallet", "flutterwave", "moonpay"]),
   paymentReference: z.string().optional(),
+  affiliateCode: z.string().trim().max(32).optional(),
 });
 
 const cryptoPaymentSchema = z.object({
@@ -122,6 +124,19 @@ router.post("/", requireAuth, async (req: AuthedRequest, res, next) => {
       .from("artworks")
       .update({ status: "reserved", updated_at: new Date().toISOString() })
       .eq("id", payload.artworkId);
+
+    const createdOrder = data as { id: string };
+    if (payload.affiliateCode) {
+      await attachAffiliateToOrder({
+        id: createdOrder.id,
+        artwork_id: payload.artworkId,
+        buyer_profile_id: profileId,
+        seller_profile_id: listedArtwork.seller_profile_id,
+        amount: listedArtwork.price_amount,
+        currency: listedArtwork.price_currency,
+        affiliateCode: payload.affiliateCode,
+      });
+    }
 
     return res.status(201).json({ order: data });
   } catch (error) {

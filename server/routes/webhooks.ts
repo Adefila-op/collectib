@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
 import { recalculateArtworkMarketValue } from "../services/market-value.js";
+import { markAffiliateOrderPaid } from "./affiliates.js";
 
 const router = Router();
 
@@ -107,6 +108,7 @@ router.post("/flutterwave", async (req, res, next) => {
           .from("artworks")
           .update({ status: "sold", updated_at: new Date().toISOString() })
           .eq("id", paymentOrder.artwork_id);
+        await markAffiliateOrderPaid(paymentOrder.id);
       }
 
       if (!paymentOrder) {

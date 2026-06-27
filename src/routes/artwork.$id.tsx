@@ -2,16 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton, SecondaryButton } from "@/components/art-ui";
-import { getArtwork, type Artwork } from "@/lib/api";
+import { getArtwork, recordAffiliateClick, type Artwork } from "@/lib/api";
 import { formatLocalPrice } from "@/lib/pricing";
 import { Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/artwork/$id")({
+  validateSearch: (search) => ({
+    aff: typeof search.aff === "string" ? search.aff : "",
+  }),
   component: ArtworkRoute,
 });
 
 function ArtworkRoute() {
   const { id } = Route.useParams();
+  const { aff } = Route.useSearch();
   const [artwork, setArtwork] = useState<Artwork | null>(null);
   const [status, setStatus] = useState("Loading artwork...");
 
@@ -25,6 +29,19 @@ function ArtworkRoute() {
         setStatus(error instanceof Error ? error.message : "Could not load artwork.");
       });
   }, [id]);
+
+  useEffect(() => {
+    if (!aff) return;
+
+    window.localStorage.setItem("collectibles.affiliateCode", aff);
+    recordAffiliateClick({
+      affiliateCode: aff,
+      artworkId: id,
+      visitorKey: window.localStorage.getItem("collectibles.authDeviceId") ?? undefined,
+    }).catch(() => {
+      // Click tracking should never block artwork browsing.
+    });
+  }, [aff, id]);
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -91,7 +108,7 @@ function ArtworkRoute() {
                 Offer Only
               </PrimaryButton>
             ) : (
-              <PrimaryButton to="/checkout" search={{ artworkId: artwork.id }}>
+              <PrimaryButton to="/checkout" search={{ artworkId: artwork.id, affiliateCode: aff }}>
                 Buy Now
               </PrimaryButton>
             )}
