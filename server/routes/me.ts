@@ -294,12 +294,14 @@ router.get("/portfolio", requireAuth, async (req: AuthedRequest, res, next) => {
     if (orders.error) throw orders.error;
     if (listings.error) throw listings.error;
     if (wallets.error) throw wallets.error;
-    if (certificates.error) throw certificates.error;
+    if (certificates.error && !isMissingProvenanceTableError(certificates.error)) {
+      throw certificates.error;
+    }
 
     const orderRows = (orders.data ?? []) as PortfolioOrderRow[];
     const listingRows = (listings.data ?? []) as PortfolioArtworkRow[];
     const walletRows = (wallets.data ?? []) as WalletSnapshotRow[];
-    const certificateRows = (certificates.data ?? []) as ProvenanceCertificateRow[];
+    const certificateRows = certificates.error ? [] : (certificates.data ?? []) as ProvenanceCertificateRow[];
     const paidOrders = orderRows.filter((order) =>
       ["paid", "crypto_submitted", "payment_review"].includes(order.status),
     );
@@ -380,6 +382,15 @@ function tokenBalance(asset: WalletAsset) {
   if (!Number.isFinite(balance)) return 0;
   if (!Number.isFinite(decimals) || decimals <= 0) return balance;
   return balance / 10 ** decimals;
+}
+
+function isMissingProvenanceTableError(error: { code?: string; message?: string }) {
+  const message = String(error.message ?? "").toLowerCase();
+  return (
+    error.code === "PGRST205" ||
+    error.code === "42P01" ||
+    (message.includes("provenance_certificates") && message.includes("schema"))
+  );
 }
 
 export default router;

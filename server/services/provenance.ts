@@ -31,6 +31,7 @@ export async function issueProvenanceCertificate(input: CertificateInput) {
     .eq("artwork_id", input.artworkId)
     .eq("status", "active");
 
+  if (activeError && isMissingProvenanceTableError(activeError)) return null;
   if (activeError) throw activeError;
 
   const previousCerts = (activeCerts ?? []) as ExistingCertificateRow[];
@@ -87,4 +88,13 @@ export async function issueProvenanceCertificate(input: CertificateInput) {
 
   if (error) throw error;
   return data;
+}
+
+function isMissingProvenanceTableError(error: { code?: string; message?: string }) {
+  const message = String(error.message ?? "").toLowerCase();
+  return (
+    error.code === "PGRST205" ||
+    error.code === "42P01" ||
+    (message.includes("provenance_certificates") && message.includes("schema"))
+  );
 }

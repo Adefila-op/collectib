@@ -32,8 +32,6 @@ function Portfolio() {
       });
   }, []);
 
-  const returnValue = portfolio?.stats.totalReturn ?? 0;
-  const returnPrefix = returnValue >= 0 ? "+" : "";
   const chartPoints = useMemo(() => buildChartPoints(portfolio?.artworks ?? []), [portfolio]);
   const walletNfts = portfolio?.wallet.nfts ?? [];
   const certificates = portfolio?.provenanceCertificates ?? [];
@@ -51,24 +49,13 @@ function Portfolio() {
       <div className="mx-5 mt-4 rounded-3xl bg-primary text-primary-foreground p-5">
         <p className="text-xs opacity-80">Total Portfolio Value</p>
         <p className="text-3xl font-extrabold mt-1">
-          {formatLocalPrice(portfolio?.stats.portfolioValue ?? 0, "USD")}{" "}
-          <span className="text-sm font-medium opacity-80">
-            {returnPrefix}
-            {formatLocalPrice(returnValue, "USD")}
-          </span>
+          {formatLocalPrice(portfolio?.stats.portfolioValue ?? 0, "USD")}
         </p>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           <Stat label="SOL" value={formatToken(portfolio?.stats.solBalance ?? 0, "SOL")} />
           <Stat label="USDC" value={formatToken(portfolio?.stats.usdcBalance ?? 0, "USDC")} />
           <Stat label="Certs" value={String(portfolio?.stats.provenanceCertificates ?? 0)} />
         </div>
-      </div>
-
-      <div className="mx-5 mt-4 grid grid-cols-2 gap-3">
-        <MiniStat label="Artworks" value={String(portfolio?.stats.totalArtworks ?? 0)} />
-        <MiniStat label="Total spent" value={formatLocalPrice(portfolio?.stats.totalSpent ?? 0, "USD")} />
-        <MiniStat label="Wallet NFTs" value={String(portfolio?.stats.walletNfts ?? 0)} />
-        <MiniStat label="Return" value={`${returnPrefix}${formatLocalPrice(returnValue, "USD")}`} />
       </div>
 
       <section className="px-5 mt-6">
