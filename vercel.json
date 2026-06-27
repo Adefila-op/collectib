@@ -5,6 +5,30 @@
       "destination": "/api"
     },
     {
+      "source": "/affliate",
+      "destination": "/affliate/index.html"
+    },
+    {
+      "source": "/affliate/",
+      "destination": "/affliate/index.html"
+    },
+    {
+      "source": "/affiliate",
+      "destination": "/affliate/index.html"
+    },
+    {
+      "source": "/affiliate/",
+      "destination": "/affliate/index.html"
+    },
+    {
+      "source": "/affliates",
+      "destination": "/affliates/index.html"
+    },
+    {
+      "source": "/affliates/",
+      "destination": "/affliates/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

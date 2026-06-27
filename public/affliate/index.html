@@ -3,19 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Collectibles Affiliate Network</title>
+    <title>Collectibles Affiliate</title>
     <style>
       :root {
         color-scheme: light;
-        --bg: #eef3f8;
-        --panel: rgba(255, 255, 255, 0.9);
-        --line: #dbe4ef;
-        --text: #111827;
-        --muted: #64748b;
-        --primary: #6d4aff;
-        --primary-dark: #4c2edb;
-        --green: #0d9f6e;
-        --shadow: 0 18px 46px rgba(15, 23, 42, 0.1);
+        --bg: #f1eefc;
+        --panel: #ffffff;
+        --line: #e7e3f5;
+        --text: #090d1f;
+        --muted: #66708a;
+        --primary: #5d35f6;
+        --primary-2: #7d4dff;
+        --primary-soft: #f0ebff;
+        --shadow: 0 24px 70px rgba(42, 32, 94, 0.12);
       }
 
       * {
@@ -24,11 +24,9 @@
 
       body {
         margin: 0;
-        min-width: 1180px;
         min-height: 100vh;
         background:
-          radial-gradient(circle at 12% 10%, rgba(109, 74, 255, 0.18), transparent 30%),
-          radial-gradient(circle at 88% 12%, rgba(13, 159, 110, 0.16), transparent 28%),
+          linear-gradient(90deg, rgba(93, 53, 246, 0.08), rgba(255, 255, 255, 0) 42%),
           var(--bg);
         color: var(--text);
         font-family:
@@ -37,205 +35,202 @@
       }
 
       button,
-      input,
-      select {
+      input {
         font: inherit;
       }
 
-      .mobile-lock {
-        display: none;
+      .page {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        padding: 28px;
       }
 
       .shell {
+        position: relative;
         display: grid;
-        grid-template-columns: minmax(420px, 0.9fr) minmax(680px, 1.1fr);
-        min-height: 100vh;
+        grid-template-columns: minmax(380px, 0.82fr) minmax(520px, 1fr);
+        width: min(1280px, 100%);
+        min-height: 760px;
+        --visual-image: url("/assets/affiliate-signin.jpg");
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: var(--shadow);
       }
 
-      .hero {
+      .auth-side {
+        position: relative;
+        z-index: 2;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        padding: 42px;
-        border-right: 1px solid var(--line);
+        padding: 54px 58px 42px;
       }
 
       .brand {
-        margin: 0;
-        font-size: 23px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 74px;
+        color: var(--text);
+        font-size: 24px;
         font-weight: 850;
+        letter-spacing: 0;
+      }
+
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border: 3px solid var(--primary);
+        border-radius: 12px;
+        color: var(--primary);
+        font-weight: 950;
       }
 
       .brand span {
         color: var(--primary);
       }
 
-      .hero-copy {
-        max-width: 560px;
-      }
-
       .eyebrow {
         display: inline-flex;
+        width: fit-content;
+        min-height: 32px;
         align-items: center;
-        min-height: 34px;
-        border: 1px solid rgba(109, 74, 255, 0.18);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.68);
-        color: var(--primary-dark);
-        padding: 0 12px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        padding: 0 14px;
         font-size: 13px;
-        font-weight: 750;
+        font-weight: 780;
       }
 
       h1 {
-        margin: 20px 0 16px;
-        font-size: 58px;
-        line-height: 1.02;
+        max-width: 520px;
+        margin: 22px 0 16px;
+        font-size: 44px;
+        line-height: 1.12;
         letter-spacing: 0;
       }
 
-      .hero-copy p {
-        margin: 0;
-        color: #526179;
-        font-size: 18px;
+      h1 span {
+        color: var(--primary);
+      }
+
+      .intro {
+        max-width: 460px;
+        margin: 0 0 28px;
+        color: var(--muted);
+        font-size: 17px;
         line-height: 1.65;
       }
 
-      .metric-row {
+      .mode-tabs,
+      .role-tabs {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-top: 30px;
-      }
-
-      .metric {
-        border: 1px solid var(--line);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 16px;
         border-radius: 8px;
-        background: var(--panel);
-        padding: 16px;
-        box-shadow: var(--shadow);
+        background: #f6f3ff;
+        padding: 5px;
       }
 
-      .metric strong {
-        display: block;
-        font-size: 24px;
+      .mode-tabs button,
+      .role-tabs button {
+        min-height: 42px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #66708a;
+        font-weight: 780;
+        cursor: pointer;
       }
 
-      .metric span {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .hero-foot {
-        display: grid;
-        gap: 10px;
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .workspace {
-        padding: 32px;
-      }
-
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 20px;
-      }
-
-      .topbar a {
-        color: var(--primary-dark);
-        font-size: 13px;
-        font-weight: 800;
-        text-decoration: none;
-      }
-
-      .forms {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-
-      .card {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--panel);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-      }
-
-      .card-head {
-        min-height: 140px;
-        padding: 22px;
-        background:
-          linear-gradient(135deg, rgba(109, 74, 255, 0.16), rgba(255, 255, 255, 0)),
-          #fff;
-      }
-
-      .card-head.lead {
-        background:
-          linear-gradient(135deg, rgba(13, 159, 110, 0.18), rgba(255, 255, 255, 0)),
-          #fff;
-      }
-
-      .card h2 {
-        margin: 0 0 8px;
-        font-size: 22px;
-      }
-
-      .card p {
-        margin: 0;
-        color: var(--muted);
-        line-height: 1.5;
-        font-size: 13px;
+      .mode-tabs button.active,
+      .role-tabs button.active {
+        background: #ffffff;
+        color: var(--primary);
+        box-shadow: 0 10px 24px rgba(60, 47, 122, 0.09);
       }
 
       form {
-        display: grid;
-        gap: 11px;
-        padding: 18px;
+        display: none;
+        gap: 12px;
       }
 
-      input,
-      select {
+      form.active {
+        display: grid;
+      }
+
+      .field {
+        position: relative;
+      }
+
+      .field input {
         width: 100%;
-        min-height: 43px;
+        min-height: 58px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #fff;
         color: var(--text);
-        padding: 0 13px;
+        padding: 0 16px 0 48px;
         outline: none;
       }
 
-      input:focus,
-      select:focus {
-        border-color: rgba(109, 74, 255, 0.56);
-        box-shadow: 0 0 0 3px rgba(109, 74, 255, 0.1);
+      .field input:focus {
+        border-color: rgba(93, 53, 246, 0.54);
+        box-shadow: 0 0 0 4px rgba(93, 53, 246, 0.1);
       }
 
-      .button {
-        min-height: 44px;
+      .field span {
+        position: absolute;
+        left: 17px;
+        top: 50%;
+        color: #8a93a8;
+        transform: translateY(-50%);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 30px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .row label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .row input {
+        accent-color: var(--primary);
+      }
+
+      .row button {
         border: 0;
-        border-radius: 8px;
-        background: linear-gradient(135deg, var(--primary), #8d5cf6);
-        color: #fff;
-        font-weight: 800;
+        background: transparent;
+        color: var(--primary);
+        font-weight: 760;
         cursor: pointer;
       }
 
-      .button.green {
-        background: linear-gradient(135deg, var(--green), #22c55e);
-      }
-
-      .login {
-        margin-top: 16px;
-      }
-
-      .login form {
-        grid-template-columns: 1fr 1fr auto;
-        align-items: center;
+      .primary-button {
+        min-height: 58px;
+        border: 0;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        color: #fff;
+        font-size: 16px;
+        font-weight: 850;
+        cursor: pointer;
+        box-shadow: 0 16px 30px rgba(93, 53, 246, 0.24);
       }
 
       .status {
@@ -243,18 +238,20 @@
         margin: 14px 0 0;
         color: var(--muted);
         font-size: 13px;
+        line-height: 1.45;
       }
 
       .resend-button {
         display: none;
+        width: fit-content;
         min-height: 38px;
         margin-top: 10px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #fff;
-        color: var(--primary-dark);
+        color: var(--primary);
         padding: 0 14px;
-        font-weight: 750;
+        font-weight: 780;
         cursor: pointer;
       }
 
@@ -263,116 +260,183 @@
         align-items: center;
       }
 
-      @media (max-width: 899px) {
-        body {
-          min-width: 0;
+      .visual-side {
+        position: relative;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at 82% 50%, #6138f4 0 35%, transparent 35.4%),
+          linear-gradient(90deg, rgba(255, 255, 255, 0), #f8f6ff);
+      }
+
+      .visual-side::before {
+        position: absolute;
+        inset: 0;
+        background-image: var(--visual-image);
+        background-position: center right;
+        background-repeat: no-repeat;
+        background-size: cover;
+        content: "";
+      }
+
+      .visual-card {
+        position: absolute;
+        right: 54px;
+        bottom: 54px;
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        gap: 22px;
+        align-items: center;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.88);
+        padding: 18px 22px;
+        box-shadow: 0 18px 48px rgba(24, 22, 54, 0.16);
+        backdrop-filter: blur(18px);
+      }
+
+      .perk {
+        display: grid;
+        grid-template-columns: 36px auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .perk-icon {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        color: #fff;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .perk strong,
+      .perk span {
+        display: block;
+        white-space: nowrap;
+      }
+
+      .perk strong {
+        font-size: 13px;
+      }
+
+      .perk span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      @media (max-width: 1040px) {
+        .page {
+          padding: 0;
         }
 
         .shell {
-          display: none;
-        }
-
-        .mobile-lock {
-          display: grid;
+          grid-template-columns: 1fr;
           min-height: 100vh;
-          place-items: center;
-          padding: 24px;
-          text-align: center;
+          border-radius: 0;
         }
 
-        .mobile-lock div {
-          max-width: 360px;
-          border: 1px solid var(--line);
-          border-radius: 8px;
-          background: #fff;
-          padding: 24px;
-          box-shadow: var(--shadow);
+        .auth-side {
+          padding: 34px 24px;
+        }
+
+        .brand {
+          margin-bottom: 36px;
+        }
+
+        h1 {
+          font-size: 36px;
+        }
+
+        .visual-side {
+          display: none;
         }
       }
     </style>
   </head>
   <body>
-    <section class="mobile-lock">
-      <div>
-        <h1>Affiliate Network</h1>
-        <p>This portal is a desktop workspace and is separate from the collector mobile app.</p>
-      </div>
-    </section>
+    <main class="page">
+      <section class="shell">
+        <div class="auth-side">
+          <p class="brand"><span class="brand-mark">CA</span> Collectibles <span>Affiliate</span></p>
 
-    <main class="shell">
-      <section class="hero">
-        <p class="brand">Collectibles <span>Affiliate</span></p>
-        <div class="hero-copy">
-          <span class="eyebrow">Dedicated sales network</span>
-          <h1>Earn 10k monthly refferring onboarding a Affliate</h1>
-          <p>
-            Join as an affiliate to promote artwork and earn sales commission, or join as a
-            lead affiliate to onboard and coach a selling team.
-          </p>
-          <div class="metric-row">
-            <div class="metric"><strong>5%</strong><span>Commission on attributed sales</span></div>
-            <div class="metric"><strong>7 days</strong><span>Commission protection window</span></div>
-            <div class="metric"><strong>5 leads</strong><span>Lead affiliate slots</span></div>
+          <div class="copy">
+            <span class="eyebrow" id="eyebrow">Welcome back</span>
+            <h1 id="headline">Welcome back, let&apos;s <span>grow together</span></h1>
+            <p class="intro" id="intro">
+              Sign in once and Collectibles will open the right affiliate dashboard for your account.
+            </p>
           </div>
-        </div>
-        <div class="hero-foot">
-          <span>Affiliates are sales partners, not collectors.</span>
-          <span>Lead invite links permanently attach new affiliates to the lead.</span>
-        </div>
-      </section>
 
-      <section class="workspace">
-        <div class="topbar">
-          <strong>Choose your affiliate path</strong>
-          <a href="/affliates/">Already approved? Open dashboard</a>
-        </div>
-
-        <div class="forms">
-          <article class="card">
-            <div class="card-head">
-              <h2>Affiliate Signup</h2>
-              <p>Discover artworks, create selling campaigns, share personalized links, and earn commission.</p>
-            </div>
-            <form data-register="affiliate">
-              <input name="fullName" placeholder="Full name" autocomplete="name" required />
-              <input name="email" type="email" placeholder="Email address" autocomplete="email" required />
-              <input name="phone" placeholder="Phone number" autocomplete="tel" />
-              <input name="password" type="password" placeholder="Password" autocomplete="new-password" required />
-              <input name="leadCode" id="affiliate-lead-code" placeholder="Lead invite code, optional" />
-              <button class="button" type="submit">Sign Up as Affiliate</button>
-            </form>
-          </article>
-
-          <article class="card">
-            <div class="card-head lead">
-              <h2>Lead Affiliate Signup</h2>
-              <p>Recruit affiliates, coach your team, track performance, and qualify for leadership bonus payouts.</p>
-            </div>
-            <form data-register="lead">
-              <input name="fullName" placeholder="Full name" autocomplete="name" required />
-              <input name="email" type="email" placeholder="Email address" autocomplete="email" required />
-              <input name="phone" placeholder="Phone number" autocomplete="tel" />
-              <input name="password" type="password" placeholder="Password" autocomplete="new-password" required />
-              <button class="button green" type="submit">Sign Up as Lead</button>
-            </form>
-          </article>
-        </div>
-
-        <article class="card login">
-          <div class="card-head">
-            <h2>Login</h2>
-            <p>Use the same verified email account to enter the affiliate desktop dashboard.</p>
+          <div class="mode-tabs" aria-label="Affiliate auth mode">
+            <button class="active" type="button" data-mode="login">Sign in</button>
+            <button type="button" data-mode="signup">Create account</button>
           </div>
-          <form id="login-form">
-            <input name="email" type="email" placeholder="Email address" autocomplete="email" required />
-            <input name="password" type="password" placeholder="Password" autocomplete="current-password" required />
-            <button class="button" type="submit">Login</button>
+
+          <form class="active" id="login-form">
+            <label class="field">
+              <span>@</span>
+              <input name="email" type="email" placeholder="Email address" autocomplete="email" required />
+            </label>
+            <label class="field">
+              <span>#</span>
+              <input name="password" type="password" placeholder="Password" autocomplete="current-password" required />
+            </label>
+            <div class="row">
+              <label><input name="remember" type="checkbox" /> Remember me</label>
+              <button type="button" data-forgot>Forgot password?</button>
+            </div>
+            <button class="primary-button" type="submit">Sign in</button>
           </form>
-        </article>
-        <p class="status" id="status"></p>
-        <button class="resend-button" id="resend-button" type="button">
-          Resend verification email
-        </button>
+
+          <form id="signup-form">
+            <div class="role-tabs" aria-label="Affiliate user type">
+              <button class="active" type="button" data-role="affiliate">Affiliate</button>
+              <button type="button" data-role="lead">Lead affiliate</button>
+            </div>
+            <label class="field">
+              <span>*</span>
+              <input name="fullName" placeholder="Full name" autocomplete="name" required />
+            </label>
+            <label class="field">
+              <span>@</span>
+              <input name="email" type="email" placeholder="Email address" autocomplete="email" required />
+            </label>
+            <label class="field">
+              <span>+</span>
+              <input name="phone" placeholder="Phone number" autocomplete="tel" />
+            </label>
+            <label class="field">
+              <span>#</span>
+              <input name="password" type="password" placeholder="Create password" autocomplete="new-password" required />
+            </label>
+            <label class="field">
+              <span>#</span>
+              <input name="confirmPassword" type="password" placeholder="Confirm password" autocomplete="new-password" required />
+            </label>
+            <label class="field" id="lead-code-field">
+              <span>%</span>
+              <input name="leadCode" id="affiliate-lead-code" placeholder="Referral or invite code, optional" />
+            </label>
+            <div class="row">
+              <label><input name="terms" type="checkbox" required /> I agree to the Terms of Service and Privacy Policy</label>
+            </div>
+            <button class="primary-button" type="submit">Create account</button>
+          </form>
+
+          <p class="status" id="status"></p>
+          <button class="resend-button" id="resend-button" type="button">Resend verification email</button>
+        </div>
+
+        <div class="visual-side" aria-hidden="true">
+          <div class="visual-card">
+            <div class="perk"><span class="perk-icon">$</span><div><strong>High Commissions</strong><span>Earn on each sale</span></div></div>
+            <div class="perk"><span class="perk-icon">L</span><div><strong>Smart Routing</strong><span>Role-based dashboard</span></div></div>
+            <div class="perk"><span class="perk-icon">P</span><div><strong>Fast Payouts</strong><span>Track every order</span></div></div>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -380,11 +444,50 @@
       const AUTH_TOKEN_KEY = "collectibles.authToken";
       const status = document.querySelector("#status");
       const resendButton = document.querySelector("#resend-button");
+      const modeButtons = document.querySelectorAll("[data-mode]");
+      const roleButtons = document.querySelectorAll("[data-role]");
+      const loginForm = document.querySelector("#login-form");
+      const signupForm = document.querySelector("#signup-form");
+      const leadCodeField = document.querySelector("#lead-code-field");
+      const leadCodeInput = document.querySelector("#affiliate-lead-code");
+      const copy = {
+        login: {
+          eyebrow: "Welcome back",
+          headline: "Welcome back, let's <span>grow together</span>",
+          intro: "Sign in once and Collectibles will open the right affiliate dashboard for your account.",
+        },
+        signup: {
+          eyebrow: "Create your account",
+          headline: "Join and start earning from <span>your passion</span>",
+          intro: "Choose your user type, promote curated artwork, and track commissions from one affiliate workspace.",
+        },
+      };
       let lastEmail = "";
+      let selectedRole = "affiliate";
 
       function setStatus(message, canResend = false) {
         status.textContent = message;
         resendButton.classList.toggle("show", Boolean(canResend && lastEmail));
+      }
+
+      function setMode(mode) {
+        modeButtons.forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
+        loginForm.classList.toggle("active", mode === "login");
+        signupForm.classList.toggle("active", mode === "signup");
+        document.querySelector(".shell").style.setProperty(
+          "--visual-image",
+          mode === "signup" ? 'url("/assets/affiliate-signup.jpg")' : 'url("/assets/affiliate-signin.jpg")',
+        );
+        document.querySelector("#eyebrow").textContent = copy[mode].eyebrow;
+        document.querySelector("#headline").innerHTML = copy[mode].headline;
+        document.querySelector("#intro").textContent = copy[mode].intro;
+        setStatus("");
+      }
+
+      function setRole(role) {
+        selectedRole = role;
+        roleButtons.forEach((button) => button.classList.toggle("active", button.dataset.role === role));
+        leadCodeField.style.display = role === "affiliate" ? "block" : "none";
       }
 
       function canResendFromMessage(message) {
@@ -401,63 +504,40 @@
         return body;
       }
 
-      function payloadFrom(form, role) {
-        const data = new FormData(form);
-        const leadFromUrl = new URLSearchParams(window.location.search).get("lead");
-        return {
-          fullName: data.get("fullName"),
-          email: data.get("email"),
-          phone: data.get("phone") || undefined,
-          password: data.get("password"),
-          role,
-          leadCode: role === "affiliate" ? data.get("leadCode") || leadFromUrl || undefined : undefined,
-        };
-      }
-
       async function finishAuth(response) {
-        if (response.token) {
-          localStorage.setItem(AUTH_TOKEN_KEY, response.token);
-          try {
-            await apiFetch("/api/affiliates/me");
-          } catch (error) {
-            localStorage.removeItem(AUTH_TOKEN_KEY);
-            setStatus(
-              error instanceof Error
-                ? error.message
-                : "This email is not registered for the affiliate network.",
-            );
-            return;
-          }
-          window.location.href = "/affliates/";
+        if (!response.token) {
+          setStatus(response.message || "Check your email to verify, then sign in.", true);
           return;
         }
-        setStatus(response.message || "Check your email to verify, then login.", true);
+
+        localStorage.setItem(AUTH_TOKEN_KEY, response.token);
+        try {
+          const affiliate = await apiFetch("/api/affiliates/me");
+          const destination = affiliate.account?.role === "lead" ? "/affliates/#lead-center" : "/affliates/";
+          window.location.href = destination;
+        } catch (error) {
+          localStorage.removeItem(AUTH_TOKEN_KEY);
+          setStatus(
+            error instanceof Error
+              ? error.message
+              : "This email is not registered for the affiliate network.",
+          );
+        }
       }
 
-      document.querySelectorAll("[data-register]").forEach((form) => {
-        form.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const role = form.getAttribute("data-register");
-          lastEmail = String(new FormData(form).get("email") || "");
-          setStatus("Creating affiliate account...");
-          try {
-            const response = await apiFetch("/api/affiliates/register", {
-              method: "POST",
-              body: JSON.stringify(payloadFrom(form, role)),
-            });
-            await finishAuth(response);
-          } catch (error) {
-            const message = error instanceof Error ? error.message : "Could not create account.";
-            setStatus(message, canResendFromMessage(message));
-          }
-        });
+      modeButtons.forEach((button) => {
+        button.addEventListener("click", () => setMode(button.dataset.mode));
       });
 
-      document.querySelector("#login-form").addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const data = new FormData(event.currentTarget);
-          lastEmail = String(data.get("email") || "");
-          setStatus("Signing in...");
+      roleButtons.forEach((button) => {
+        button.addEventListener("click", () => setRole(button.dataset.role));
+      });
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        lastEmail = String(data.get("email") || "");
+        setStatus("Signing in...");
         try {
           const response = await apiFetch("/api/auth/login", {
             method: "POST",
@@ -468,8 +548,60 @@
           });
           await finishAuth(response);
         } catch (error) {
-          const message = error instanceof Error ? error.message : "Could not login.";
+          const message = error instanceof Error ? error.message : "Could not sign in.";
           setStatus(message, canResendFromMessage(message));
+        }
+      });
+
+      signupForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const password = String(data.get("password") || "");
+        const confirmPassword = String(data.get("confirmPassword") || "");
+        if (password !== confirmPassword) {
+          setStatus("Passwords do not match.");
+          return;
+        }
+
+        lastEmail = String(data.get("email") || "");
+        setStatus("Creating affiliate account...");
+        try {
+          const leadFromUrl = new URLSearchParams(window.location.search).get("lead");
+          const response = await apiFetch("/api/affiliates/register", {
+            method: "POST",
+            body: JSON.stringify({
+              fullName: data.get("fullName"),
+              email: data.get("email"),
+              phone: data.get("phone") || undefined,
+              password,
+              role: selectedRole,
+              leadCode: selectedRole === "affiliate" ? data.get("leadCode") || leadFromUrl || undefined : undefined,
+            }),
+          });
+          await finishAuth(response);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Could not create account.";
+          setStatus(message, canResendFromMessage(message));
+        }
+      });
+
+      document.querySelector("[data-forgot]").addEventListener("click", async () => {
+        const email = String(new FormData(loginForm).get("email") || "");
+        if (!email) {
+          setStatus("Enter your email address first.");
+          return;
+        }
+
+        lastEmail = email;
+        setStatus("Sending password reset email...");
+        try {
+          const response = await apiFetch("/api/auth/forgot-password", {
+            method: "POST",
+            body: JSON.stringify({ email }),
+          });
+          setStatus(response.message || "Password reset email sent.");
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Could not send reset email.");
         }
       });
 
@@ -487,10 +619,15 @@
         }
       });
 
-      const leadFromUrl = new URLSearchParams(window.location.search).get("lead");
-      if (leadFromUrl) document.querySelector("#affiliate-lead-code").value = leadFromUrl;
+      const params = new URLSearchParams(window.location.search);
+      const leadFromUrl = params.get("lead");
+      if (leadFromUrl) {
+        leadCodeInput.value = leadFromUrl;
+        setMode("signup");
+        setRole("affiliate");
+      }
 
-      const message = new URLSearchParams(window.location.search).get("message");
+      const message = params.get("message");
       if (message) setStatus(message);
     </script>
   </body>

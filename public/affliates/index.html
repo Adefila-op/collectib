@@ -7,13 +7,13 @@
     <style>
       :root {
         color-scheme: light;
-        --bg: #eef3f8;
-        --panel: rgba(255, 255, 255, 0.86);
+        --bg: #f8f7ff;
+        --panel: rgba(255, 255, 255, 0.92);
         --panel-strong: #ffffff;
-        --line: #dde5ef;
-        --text: #111827;
-        --muted: #64748b;
-        --primary: #6d4aff;
+        --line: #ebe7f8;
+        --text: #090d1f;
+        --muted: #65708a;
+        --primary: #5d35f6;
         --primary-dark: #4c2edb;
         --green: #0ea86b;
         --orange: #f59e0b;
@@ -30,8 +30,8 @@
         margin: 0;
         min-width: 1120px;
         background:
-          radial-gradient(circle at top left, rgba(109, 74, 255, 0.1), transparent 30%),
-          radial-gradient(circle at top right, rgba(14, 168, 107, 0.1), transparent 28%),
+          radial-gradient(circle at 44% 0, rgba(93, 53, 246, 0.1), transparent 32%),
+          linear-gradient(90deg, rgba(93, 53, 246, 0.08), rgba(255, 255, 255, 0) 26%),
           var(--bg);
         color: var(--text);
         font-family:
@@ -50,7 +50,7 @@
 
       .shell {
         display: grid;
-        grid-template-columns: 270px minmax(0, 1fr);
+        grid-template-columns: 292px minmax(0, 1fr);
         min-height: 100vh;
       }
 
@@ -58,20 +58,33 @@
         position: sticky;
         top: 0;
         height: 100vh;
-        padding: 34px 22px;
+        padding: 34px 18px;
         border-right: 1px solid var(--line);
-        background: rgba(248, 251, 255, 0.78);
+        background: rgba(255, 255, 255, 0.84);
         backdrop-filter: blur(22px);
       }
 
       .brand {
         display: flex;
-        align-items: baseline;
-        gap: 6px;
+        align-items: center;
+        gap: 10px;
         margin: 0 0 34px;
         font-size: 21px;
         font-weight: 800;
         letter-spacing: 0;
+      }
+
+      .brand::before {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border: 3px solid var(--primary);
+        border-radius: 10px;
+        color: var(--primary);
+        content: "CA";
+        font-size: 12px;
+        font-weight: 950;
       }
 
       .brand span {
@@ -90,20 +103,22 @@
         align-items: center;
         gap: 14px;
         width: 100%;
-        min-height: 48px;
+        min-height: 52px;
         border: 0;
         border-radius: 8px;
         background: transparent;
-        color: #526179;
+        color: #4f5d77;
         padding: 0 16px;
         text-align: left;
         cursor: default;
+        font-weight: 720;
       }
 
       .nav button.active {
-        background: linear-gradient(135deg, var(--primary), #8d5cf6);
-        color: #ffffff;
-        box-shadow: 0 12px 26px rgba(109, 74, 255, 0.26);
+        border-left: 3px solid var(--primary);
+        background: #f0ebff;
+        color: var(--primary);
+        box-shadow: none;
       }
 
       .icon {
@@ -119,7 +134,8 @@
       }
 
       .active .icon {
-        background: rgba(255, 255, 255, 0.18);
+        background: var(--primary);
+        color: #fff;
       }
 
       .affiliate-card {
@@ -130,8 +146,10 @@
         padding: 16px;
         border: 1px solid var(--line);
         border-radius: 8px;
-        background: var(--panel);
-        box-shadow: var(--shadow);
+        background:
+          linear-gradient(180deg, rgba(93, 53, 246, 0.08), rgba(255, 255, 255, 0)),
+          var(--panel);
+        box-shadow: 0 18px 46px rgba(47, 35, 110, 0.1);
       }
 
       .label {
@@ -169,7 +187,7 @@
       }
 
       main {
-        padding: 32px 32px 40px;
+        padding: 30px 32px 40px;
       }
 
       .topbar {
@@ -188,9 +206,13 @@
 
       h1 {
         margin: 0;
-        font-size: 34px;
+        font-size: 28px;
         line-height: 1.1;
         letter-spacing: 0;
+      }
+
+      h1 strong {
+        color: var(--primary);
       }
 
       .subhead {
@@ -245,9 +267,9 @@
 
       .stats {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(160px, 1fr));
         gap: 16px;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
       }
 
       .stat {
@@ -255,20 +277,20 @@
         grid-template-columns: 52px 1fr;
         gap: 14px;
         align-items: center;
-        min-height: 112px;
+        min-height: 126px;
         padding: 18px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--panel-strong);
-        box-shadow: var(--shadow);
+        box-shadow: 0 16px 40px rgba(47, 35, 110, 0.08);
       }
 
       .stat-icon {
         display: grid;
         place-items: center;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
+        width: 58px;
+        height: 58px;
+        border-radius: 8px;
         color: white;
         font-size: 20px;
         font-weight: 900;
@@ -313,7 +335,7 @@
 
       .grid {
         display: grid;
-        grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.9fr);
+        grid-template-columns: minmax(0, 1fr);
         gap: 16px;
       }
 
@@ -321,18 +343,7 @@
         border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--panel-strong);
-        box-shadow: var(--shadow);
-      }
-
-      .auth-panel {
-        display: none;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        margin-bottom: 16px;
-      }
-
-      .auth-panel.show {
-        display: grid;
+        box-shadow: 0 16px 40px rgba(47, 35, 110, 0.08);
       }
 
       .form-grid {
@@ -383,7 +394,7 @@
 
       .art-strip {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 14px;
         padding: 0 14px 14px;
       }
@@ -393,11 +404,12 @@
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #ffffff;
+        box-shadow: 0 14px 32px rgba(47, 35, 110, 0.06);
       }
 
       .art-image {
         width: 100%;
-        aspect-ratio: 1.35 / 1;
+        aspect-ratio: 1 / 1;
         object-fit: cover;
         background:
           linear-gradient(135deg, rgba(109, 74, 255, 0.32), transparent),
@@ -686,15 +698,15 @@
         <p class="brand">Collectibles <span>Affiliate</span></p>
         <nav class="nav" aria-label="Affiliate navigation">
           <button class="active" data-section="stats-panel"><span class="icon">D</span> Dashboard</button>
-          <button data-section="campaigns-panel"><span class="icon">C</span> My Campaigns</button>
-          <button data-section="earnings-panel"><span class="icon">A</span> Analytics</button>
-          <button data-section="campaigns-panel"><span class="icon">T</span> Clicks & Traffic</button>
-          <button data-section="sales-panel"><span class="icon">S</span> Sales & Orders</button>
-          <button data-section="commissions-panel"><span class="icon">$</span> Commissions</button>
+          <button data-section="campaigns-panel"><span class="icon">A</span> Artwork</button>
+          <button data-section="campaigns-panel"><span class="icon">L</span> Links & Banners</button>
+          <button data-section="lead-center"><span class="icon">R</span> Referrals</button>
+          <button data-section="sales-panel"><span class="icon">S</span> Sales</button>
+          <button data-section="earnings-panel"><span class="icon">$</span> Earnings</button>
           <button data-section="commissions-panel"><span class="icon">P</span> Payouts</button>
-          <button data-section="campaigns-panel"><span class="icon">M</span> Marketing Tools</button>
-          <button data-section="stats-panel"><span class="icon">L</span> Lead Center</button>
+          <button data-section="commissions-panel"><span class="icon">R</span> Reports</button>
           <button data-section="settings-panel"><span class="icon">G</span> Settings</button>
+          <button data-section="settings-panel"><span class="icon">?</span> Support</button>
         </nav>
 
         <div class="affiliate-card">
@@ -712,9 +724,8 @@
       <main>
         <header class="topbar">
           <div>
-            <p class="welcome">Welcome back, <strong id="welcome-name">Affiliate</strong></p>
-            <h1>Affiliate Dashboard</h1>
-            <p class="subhead">Discover artworks to promote and earn commissions</p>
+            <h1>Welcome back, <strong id="welcome-name">Affiliate</strong></h1>
+            <p class="subhead">Here&apos;s what&apos;s happening with your affiliate program.</p>
           </div>
           <div class="toolbar">
             <div class="select-like" id="date-range">This month</div>
@@ -722,7 +733,7 @@
               <div class="avatar" id="avatar">A</div>
               <div class="profile-meta">
                 <strong id="profile-name">Affiliate</strong>
-                <span>Sales partner</span>
+                <span id="profile-role">Affiliate</span>
               </div>
             </div>
           </div>
@@ -734,63 +745,33 @@
 
         <section class="stats" aria-label="Affiliate statistics" id="stats-panel">
           <article class="stat">
-            <div class="stat-icon">K</div>
-            <div><p>Total Clicks</p><strong id="stat-clicks">0</strong><small id="stat-click-note">Live data</small></div>
-          </article>
-          <article class="stat">
-            <div class="stat-icon">S</div>
-            <div><p>Total Sales</p><strong id="stat-sales">0</strong><small>Paid orders</small></div>
-          </article>
-          <article class="stat">
             <div class="stat-icon">$</div>
-            <div><p>Total Revenue</p><strong id="stat-revenue">$0</strong><small id="stat-revenue-note">Marketplace value</small></div>
+            <div><p>Total Earnings</p><strong id="stat-paid">$0</strong><small>Paid commissions</small></div>
+          </article>
+          <article class="stat">
+            <div class="stat-icon">C</div>
+            <div><p>Total Sales</p><strong id="stat-revenue">$0</strong><small id="stat-revenue-note">Marketplace value</small></div>
+          </article>
+          <article class="stat">
+            <div class="stat-icon">R</div>
+            <div><p>Total Referrals</p><strong id="stat-clicks">0</strong><small id="stat-click-note">Tracked clicks</small></div>
+          </article>
+          <article class="stat">
+            <div class="stat-icon">%</div>
+            <div><p>Your Commission</p><strong id="stat-rate">5%</strong><small>Per successful sale</small></div>
           </article>
           <article class="stat">
             <div class="stat-icon">P</div>
-            <div><p>Pending Commission</p><strong id="stat-pending">$0</strong><small id="stat-pending-note">0 orders</small></div>
-          </article>
-          <article class="stat">
-            <div class="stat-icon">W</div>
-            <div><p>Paid Commission</p><strong id="stat-paid">$0</strong><small>Approved sales</small></div>
-          </article>
-        </section>
-
-        <section class="auth-panel" id="auth-panel">
-          <article class="panel">
-            <div class="panel-head">
-              <h2>Affiliate Sign In</h2>
-            </div>
-            <form class="form-grid" id="login-form">
-              <input name="email" type="email" placeholder="Email address" autocomplete="email" required />
-              <input name="password" type="password" placeholder="Password" autocomplete="current-password" required />
-              <button class="primary-button" type="submit">Sign In</button>
-            </form>
-          </article>
-          <article class="panel">
-            <div class="panel-head">
-              <h2>Join Affiliate Network</h2>
-            </div>
-            <form class="form-grid" id="register-form">
-              <input name="fullName" placeholder="Full name" autocomplete="name" required />
-              <input name="email" type="email" placeholder="Email address" autocomplete="email" required />
-              <input name="phone" placeholder="Phone number" autocomplete="tel" />
-              <input name="password" type="password" placeholder="Password" autocomplete="new-password" required />
-              <select name="role">
-                <option value="affiliate">Affiliate</option>
-                <option value="lead">Lead affiliate</option>
-              </select>
-              <input name="leadCode" id="lead-code-input" placeholder="Lead invite code, optional" />
-              <button class="primary-button" type="submit">Create Account</button>
-            </form>
+            <div><p>Pending</p><strong id="stat-pending">$0</strong><small id="stat-pending-note">7-day window</small></div>
           </article>
         </section>
 
         <section class="panel" style="margin-bottom: 16px" id="campaigns-panel">
           <div class="panel-head">
-            <h2>Available Artworks To Promote</h2>
-            <button data-refresh>Refresh data</button>
+            <h2>Top Artwork</h2>
+            <button data-refresh>View all artwork</button>
           </div>
-          <p class="helper">Choose an artwork below to start promoting and earn 5% commission on every completed sale.</p>
+          <p class="helper">Promote curated artworks and create a share link for each campaign.</p>
           <div class="art-strip" id="art-strip"></div>
         </section>
 
@@ -804,7 +785,7 @@
               <div id="campaign-table"></div>
             </article>
 
-            <article class="panel">
+            <article class="panel" id="sales-panel">
               <div class="panel-head">
                 <h2>Recent Sales</h2>
                 <span class="label" id="recent-sales-note">Orders from main app</span>
@@ -812,7 +793,7 @@
               <div id="sales-table"></div>
             </article>
 
-            <article class="panel">
+            <article class="panel" id="earnings-panel">
               <div class="panel-head">
                 <h2>Earnings Overview</h2>
                 <button data-copy-main>Share report</button>
@@ -826,7 +807,7 @@
               </div>
             </article>
 
-            <article class="panel">
+            <article class="panel" id="lead-center">
               <div class="panel-head">
                 <h2>Commission Status</h2>
                 <span class="label">7-day window</span>
@@ -963,6 +944,7 @@
         $("#welcome-name").textContent = name;
         $("#profile-name").textContent = name;
         $("#avatar").textContent = initial;
+        $("#profile-role").textContent = state.account?.role === "lead" ? "Lead Affiliate" : "Affiliate";
         $("#affiliate-code").textContent = affiliateCode();
         $("#affiliate-link-label").textContent =
           state.account?.role === "lead" ? "Your Lead Onboarding Link" : "Your Affiliate Link";
@@ -971,11 +953,11 @@
 
       function renderStats() {
         $("#stat-clicks").textContent = fmtInt(state.stats.clicks);
-        $("#stat-sales").textContent = fmtInt(state.stats.sales);
         $("#stat-revenue").textContent = fmtMoney(state.stats.totalRevenue);
         $("#stat-pending").textContent = fmtMoney(state.stats.pendingCommission);
         $("#stat-pending-note").textContent = "7-day window";
         $("#stat-paid").textContent = fmtMoney(state.stats.paidCommission);
+        $("#stat-rate").textContent = Math.round((state.commissionRate || COMMISSION_RATE) * 100) + "%";
         $("#this-month").textContent = fmtMoney(
           state.stats.pendingCommission + state.stats.approvedCommission + state.stats.paidCommission,
         );
@@ -1105,6 +1087,36 @@
         `;
       }
 
+      function renderPayoutsTable() {
+        const paid = state.commissions.filter((commission) => commission.status === "paid").slice(0, 6);
+        if (!paid.length) {
+          $("#payouts-table").innerHTML =
+            '<p class="empty">Paid commissions will appear here after approval and payout processing.</p>';
+          return;
+        }
+
+        $("#payouts-table").innerHTML = `
+          <table>
+            <thead><tr><th>Artwork</th><th>Date</th><th>Commission</th><th>Status</th></tr></thead>
+            <tbody>
+              ${paid
+                .map((commission) => {
+                  const title = commission.orders?.artworks?.title || "Artwork";
+                  return `
+                    <tr>
+                      <td>${escapeHtml(title)}</td>
+                      <td>${formatDate(commission.created_at)}</td>
+                      <td>${fmtMoney(commission.amount, commission.currency || "USD")}</td>
+                      <td>Paid</td>
+                    </tr>
+                  `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
       function renderQuickStats() {
         const paidCommissions = state.commissions.filter((commission) => commission.status === "paid");
         const totalOrderValue = state.commissions.reduce((total, commission) => total + toNumber(commission.orders?.amount), 0);
@@ -1131,6 +1143,7 @@
         const values = dated.length
           ? dated.map((_, index) => dated.slice(0, index + 1).reduce((sum, item) => sum + item.amount, 0))
           : [0, 0, 0, 0, 0];
+        if (values.length === 1) values.unshift(0);
         const max = Math.max(...values, 1);
         const points = values
           .map((value, index) => {
@@ -1162,11 +1175,14 @@
         renderCampaignTable();
         renderSalesTable();
         renderCommissionStatus();
+        renderPayoutsTable();
         renderQuickStats();
         renderChart();
         bindCopyButtons();
-        $("#auth-panel").classList.toggle("show", !state.account);
         $("#approval-banner").classList.toggle("show", state.account?.status === "pending");
+        if (window.location.hash === "#lead-center") {
+          document.getElementById("lead-center")?.scrollIntoView({ block: "start" });
+        }
       }
 
       function bindCopyButtons() {
@@ -1263,53 +1279,6 @@
       }
 
       document.querySelector("[data-refresh]").addEventListener("click", loadData);
-      document.querySelector("#login-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = new FormData(event.currentTarget);
-        try {
-          const response = await apiFetch("/api/auth/login", {
-            method: "POST",
-            body: JSON.stringify({
-              email: form.get("email"),
-              password: form.get("password"),
-            }),
-          });
-          localStorage.setItem(AUTH_TOKEN_KEY, response.token);
-          await loadData();
-        } catch (error) {
-          showToast(error instanceof Error ? error.message : "Could not sign in");
-        }
-      });
-      document.querySelector("#register-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const form = new FormData(event.currentTarget);
-        try {
-          const leadFromUrl = new URLSearchParams(window.location.search).get("lead");
-          const response = await apiFetch("/api/affiliates/register", {
-            method: "POST",
-            body: JSON.stringify({
-              fullName: form.get("fullName"),
-              email: form.get("email"),
-              phone: form.get("phone"),
-              password: form.get("password"),
-              role: form.get("role"),
-              leadCode: form.get("leadCode") || leadFromUrl || undefined,
-            }),
-          });
-          if (response.token) {
-            localStorage.setItem(AUTH_TOKEN_KEY, response.token);
-            await loadData();
-          } else if (response.needsApproval) {
-            showToast(response.message || "Your application is pending admin approval");
-          } else {
-            showToast(response.message || "Check your email to verify");
-          }
-        } catch (error) {
-          showToast(error instanceof Error ? error.message : "Could not register");
-        }
-      });
-      const leadFromUrl = new URLSearchParams(window.location.search).get("lead");
-      if (leadFromUrl) document.querySelector("#lead-code-input").value = leadFromUrl;
       bindNav();
       loadData();
     </script>
