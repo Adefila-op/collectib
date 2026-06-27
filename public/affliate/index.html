@@ -245,6 +245,24 @@
         font-size: 13px;
       }
 
+      .resend-button {
+        display: none;
+        min-height: 38px;
+        margin-top: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--primary-dark);
+        padding: 0 14px;
+        font-weight: 750;
+        cursor: pointer;
+      }
+
+      .resend-button.show {
+        display: inline-flex;
+        align-items: center;
+      }
+
       @media (max-width: 899px) {
         body {
           min-width: 0;
@@ -352,15 +370,25 @@
           </form>
         </article>
         <p class="status" id="status"></p>
+        <button class="resend-button" id="resend-button" type="button">
+          Resend verification email
+        </button>
       </section>
     </main>
 
     <script>
       const AUTH_TOKEN_KEY = "collectibles.authToken";
       const status = document.querySelector("#status");
+      const resendButton = document.querySelector("#resend-button");
+      let lastEmail = "";
 
-      function setStatus(message) {
+      function setStatus(message, canResend = false) {
         status.textContent = message;
+        resendButton.classList.toggle("show", Boolean(canResend && lastEmail));
+      }
+
+      function canResendFromMessage(message) {
+        return /confirm|verify|verified|registered|exists/i.test(message);
       }
 
       async function apiFetch(path, init = {}) {
@@ -403,13 +431,14 @@
           window.location.href = "/affliates/";
           return;
         }
-        setStatus(response.message || "Check your email to verify, then login.");
+        setStatus(response.message || "Check your email to verify, then login.", true);
       }
 
       document.querySelectorAll("[data-register]").forEach((form) => {
         form.addEventListener("submit", async (event) => {
           event.preventDefault();
           const role = form.getAttribute("data-register");
+          lastEmail = String(new FormData(form).get("email") || "");
           setStatus("Creating affiliate account...");
           try {
             const response = await apiFetch("/api/affiliates/register", {
@@ -418,15 +447,17 @@
             });
             await finishAuth(response);
           } catch (error) {
-            setStatus(error instanceof Error ? error.message : "Could not create account.");
+            const message = error instanceof Error ? error.message : "Could not create account.";
+            setStatus(message, canResendFromMessage(message));
           }
         });
       });
 
       document.querySelector("#login-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        setStatus("Signing in...");
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          lastEmail = String(data.get("email") || "");
+          setStatus("Signing in...");
         try {
           const response = await apiFetch("/api/auth/login", {
             method: "POST",
@@ -437,7 +468,22 @@
           });
           await finishAuth(response);
         } catch (error) {
-          setStatus(error instanceof Error ? error.message : "Could not login.");
+          const message = error instanceof Error ? error.message : "Could not login.";
+          setStatus(message, canResendFromMessage(message));
+        }
+      });
+
+      resendButton.addEventListener("click", async () => {
+        if (!lastEmail) return;
+        setStatus("Sending another verification email...");
+        try {
+          const response = await apiFetch("/api/auth/resend-verification", {
+            method: "POST",
+            body: JSON.stringify({ email: lastEmail }),
+          });
+          setStatus(response.message || "Verification email sent.", true);
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : "Could not resend verification email.", true);
         }
       });
 

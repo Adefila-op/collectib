@@ -48,6 +48,8 @@ const forgotPasswordSchema = z.object({
     .transform((email) => email.trim().toLowerCase()),
 });
 
+const resendVerificationSchema = forgotPasswordSchema;
+
 const resetPasswordSchema = forgotPasswordSchema.extend({
   accessToken: z.string().trim().min(16).max(4096),
   refreshToken: z.string().trim().min(16).max(4096),
@@ -380,6 +382,30 @@ router.post("/forgot-password", async (req, res, next) => {
 
     return res.json({
       message: "If an account exists for that email, Supabase has sent a reset link.",
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/resend-verification", async (req, res, next) => {
+  try {
+    const { email } = resendVerificationSchema.parse(req.body);
+    const auth = createSupabaseAuthClient();
+    const { error } = await auth.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: authRedirect(`/verify-email?email=${encodeURIComponent(email)}`),
+      },
+    });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.json({
+      message: "Verification email sent. Check your inbox and spam folder.",
     });
   } catch (error) {
     next(error);

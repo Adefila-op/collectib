@@ -331,6 +331,13 @@ export function verifyEmailToken(token: string, refreshToken?: string) {
   });
 }
 
+export function resendVerificationEmail(email: string) {
+  return request<{ message: string }>("/api/auth/resend-verification", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
 export function requestPasswordReset(email: string) {
   return request<{ message: string }>("/api/auth/forgot-password", {
     method: "POST",
