@@ -4,6 +4,7 @@ import { config, requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
 import { requireAuth } from "../middleware.js";
 import { recalculateArtworkMarketValue } from "../services/market-value.js";
+import { issueProvenanceCertificate } from "../services/provenance.js";
 import type { AuthedRequest } from "../types.js";
 
 const router = Router();
@@ -242,6 +243,12 @@ router.patch("/:id", requireAuth, async (req: AuthedRequest, res, next) => {
         .from("artworks")
         .update({ status: "reserved", updated_at: new Date().toISOString() })
         .eq("id", existingOffer.artwork_id);
+      await issueProvenanceCertificate({
+        artworkId: existingOffer.artwork_id,
+        holderProfileId: existingOffer.buyer_profile_id,
+        source: "offer_accepted",
+        sourceId: existingOffer.id,
+      });
     }
     await recalculateArtworkMarketValue(
       existingOffer.artwork_id,

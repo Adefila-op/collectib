@@ -70,6 +70,55 @@ type PortfolioOrderRow = {
   artworks?: PortfolioArtworkRow | null;
 };
 
+type WalletSnapshotRow = {
+  wallet_address: string;
+  holdings_snapshot?: {
+    solBalance?: number;
+    assets?: unknown[];
+    checkedAt?: string;
+  } | null;
+};
+
+type ProvenanceCertificateRow = {
+  id: string;
+  artwork_id: string;
+  holder_profile_id: string;
+  source: string;
+  source_id: string;
+  status: string;
+  onchain_status?: string | null;
+  chain?: string | null;
+  certificate_mint?: string | null;
+  mint_signature?: string | null;
+  burn_signature?: string | null;
+  issued_at?: string;
+  burned_at?: string | null;
+  artworks?: PortfolioArtworkRow | null;
+};
+
+type WalletAsset = {
+  id?: string;
+  interface?: string;
+  content?: {
+    metadata?: {
+      name?: string;
+      symbol?: string;
+    };
+    links?: {
+      image?: string;
+    };
+  };
+  token_info?: {
+    symbol?: string;
+    balance?: number | string;
+    decimals?: number;
+    price_info?: {
+      price_per_token?: number;
+      total_price?: number;
+    };
+  };
+};
+
 function formatMoney(amount: number | string | undefined, currency: string | undefined) {
   if (amount === undefined || currency === undefined) return "";
   const value = Number(amount);
@@ -219,7 +268,7 @@ router.get("/portfolio", requireAuth, async (req: AuthedRequest, res, next) => {
     if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });
 
     const supabase = getSupabase();
-    const [orders, listings] = await Promise.all([
+    const [orders, listings, wallets, certificates] = await Promise.all([
       supabase
         .from("orders")
         .select("id, amount, currency, status, created_at, artworks(id, title, price_amount, price_currency, image_url, status, artists(name))")
@@ -230,13 +279,27 @@ router.get("/portfolio", requireAuth, async (req: AuthedRequest, res, next) => {
         .select("id, title, price_amount, price_currency, image_url, status, artists(name)")
         .eq("seller_profile_id", profileId)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("connected_wallets")
+        .select("wallet_address, holdings_snapshot")
+        .eq("profile_id", profileId)
+        .order("last_connected_at", { ascending: false }),
+      supabase
+        .from("provenance_certificates")
+        .select("*, artworks(id, title, price_amount, price_currency, image_url, status, artists(name))")
+        .eq("holder_profile_id", profileId)
+        .order("issued_at", { ascending: false }),
     ]);
 
     if (orders.error) throw orders.error;
     if (listings.error) throw listings.error;
+    if (wallets.error) throw wallets.error;
+    if (certificates.error) throw certificates.error;
 
     const orderRows = (orders.data ?? []) as PortfolioOrderRow[];
     const listingRows = (listings.data ?? []) as PortfolioArtworkRow[];
+    const walletRows = (wallets.data ?? []) as WalletSnapshotRow[];
+    const certificateRows = (certificates.data ?? []) as ProvenanceCertificateRow[];
     const paidOrders = orderRows.filter((order) =>
       ["paid", "crypto_submitted", "payment_review"].includes(order.status),
     );
@@ -254,6 +317,11 @@ router.get("/portfolio", requireAuth, async (req: AuthedRequest, res, next) => {
       (sum, artwork) => sum + Number(artwork.price_amount ?? 0),
       0,
     );
+    const walletSummaries = walletRows.map((wallet) => summarizeWallet(wallet));
+    const solBalance = walletSummaries.reduce((sum, wallet) => sum + wallet.solBalance, 0);
+    const usdcBalance = walletSummaries.reduce((sum, wallet) => sum + wallet.usdcBalance, 0);
+    const walletNfts = walletSummaries.flatMap((wallet) => wallet.nfts);
+    const activeCertificates = certificateRows.filter((certificate) => certificate.status === "active");
 
     return res.json({
       stats: {
@@ -261,12 +329,57 @@ router.get("/portfolio", requireAuth, async (req: AuthedRequest, res, next) => {
         totalArtworks: artworkById.size,
         totalSpent,
         totalReturn: portfolioValue - totalSpent,
+        solBalance,
+        usdcBalance,
+        walletNfts: walletNfts.length,
+        provenanceCertificates: activeCertificates.length,
       },
       artworks: Array.from(artworkById.values()),
+      wallet: {
+        solBalance,
+        usdcBalance,
+        wallets: walletSummaries,
+        nfts: walletNfts,
+      },
+      provenanceCertificates: certificateRows,
     });
   } catch (error) {
     next(error);
   }
 });
+
+function summarizeWallet(wallet: WalletSnapshotRow) {
+  const assets = (wallet.holdings_snapshot?.assets ?? []) as WalletAsset[];
+  const fungibles = assets.filter((asset) => asset.token_info?.symbol);
+  const usdcBalance = fungibles
+    .filter((asset) => String(asset.token_info?.symbol ?? "").toUpperCase() === "USDC")
+    .reduce((sum, asset) => sum + tokenBalance(asset), 0);
+  const nfts = assets
+    .filter((asset) => !asset.token_info?.symbol)
+    .map((asset, index) => ({
+      id: asset.id ?? `${wallet.wallet_address}:${index}`,
+      name: asset.content?.metadata?.name ?? `NFT ${index + 1}`,
+      symbol: asset.content?.metadata?.symbol ?? "NFT",
+      imageUrl: asset.content?.links?.image ?? null,
+      walletAddress: wallet.wallet_address,
+      kind: "wallet_nft",
+    }));
+
+  return {
+    walletAddress: wallet.wallet_address,
+    solBalance: Number(wallet.holdings_snapshot?.solBalance ?? 0),
+    usdcBalance,
+    checkedAt: wallet.holdings_snapshot?.checkedAt ?? null,
+    nfts,
+  };
+}
+
+function tokenBalance(asset: WalletAsset) {
+  const balance = Number(asset.token_info?.balance ?? 0);
+  const decimals = Number(asset.token_info?.decimals ?? 0);
+  if (!Number.isFinite(balance)) return 0;
+  if (!Number.isFinite(decimals) || decimals <= 0) return balance;
+  return balance / 10 ** decimals;
+}
 
 export default router;

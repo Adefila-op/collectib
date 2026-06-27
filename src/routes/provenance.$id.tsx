@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { BlobArt, PrimaryButton } from "@/components/art-ui";
-import { getArtwork, type Artwork } from "@/lib/api";
+import { getArtwork, getPortfolio, type Artwork, type ProvenanceCertificate } from "@/lib/api";
 import { Check } from "lucide-react";
 
 export const Route = createFileRoute("/provenance/$id")({
@@ -12,14 +12,22 @@ export const Route = createFileRoute("/provenance/$id")({
 function Provenance() {
   const { id } = Route.useParams();
   const [artwork, setArtwork] = useState<Artwork | null>(null);
+  const [certificate, setCertificate] = useState<ProvenanceCertificate | null>(null);
   const [status, setStatus] = useState("Loading certificate...");
 
   useEffect(() => {
     let cancelled = false;
-    getArtwork(id)
-      .then(({ artwork }) => {
+    Promise.all([
+      getArtwork(id),
+      getPortfolio().catch(() => null),
+    ])
+      .then(([artworkResponse, portfolioResponse]) => {
         if (cancelled) return;
-        setArtwork(artwork);
+        setArtwork(artworkResponse.artwork);
+        const activeCertificate = portfolioResponse?.provenanceCertificates.find(
+          (item) => item.artwork_id === id && item.status === "active",
+        );
+        setCertificate(activeCertificate ?? null);
         setStatus("");
       })
       .catch((error) => {
@@ -52,14 +60,22 @@ function Provenance() {
             </p>
 
             <div className="mt-4 space-y-2 text-sm">
-              <Info label="Certificate ID" value={`COL-${artwork.id.slice(0, 8).toUpperCase()}`} />
-              <Info label="Owner" value="Collectibles Admin" />
+              <Info
+                label="Certificate ID"
+                value={certificate ? `COL-${certificate.id.slice(0, 8).toUpperCase()}` : `COL-${artwork.id.slice(0, 8).toUpperCase()}`}
+              />
+              <Info label="Holder" value={certificate ? "Your verified profile" : "Pending holder verification"} />
               <Info label="Asset" value="Original physical artwork" />
               <Info
                 label="Transfer mode"
                 value={artwork.status === "owned" ? "Offer review only" : "Marketplace checkout"}
               />
-              <Info label="Token mint" value={artwork.token_mint ?? "Not minted"} />
+              <Info
+                label="On-chain status"
+                value={String(certificate?.onchain_status ?? "pending_mint").replace(/_/g, " ")}
+              />
+              <Info label="Token mint" value={certificate?.certificate_mint ?? artwork.token_mint ?? "Pending mint"} />
+              {certificate?.mint_signature && <Info label="Mint signature" value={certificate.mint_signature} />}
             </div>
 
             <div className="mt-5 flex items-center gap-2 rounded-xl bg-primary/10 text-primary px-3 py-2">

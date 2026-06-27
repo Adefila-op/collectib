@@ -183,8 +183,51 @@ export type PortfolioSummary = {
     totalArtworks: number;
     totalSpent: number;
     totalReturn: number;
+    solBalance: number;
+    usdcBalance: number;
+    walletNfts: number;
+    provenanceCertificates: number;
   };
   artworks: Artwork[];
+  wallet: {
+    solBalance: number;
+    usdcBalance: number;
+    wallets: Array<{
+      walletAddress: string;
+      solBalance: number;
+      usdcBalance: number;
+      checkedAt?: string | null;
+      nfts: WalletAssetSummary[];
+    }>;
+    nfts: WalletAssetSummary[];
+  };
+  provenanceCertificates: ProvenanceCertificate[];
+};
+
+export type WalletAssetSummary = {
+  id: string;
+  name: string;
+  symbol: string;
+  imageUrl?: string | null;
+  walletAddress: string;
+  kind: "wallet_nft";
+};
+
+export type ProvenanceCertificate = {
+  id: string;
+  artwork_id: string;
+  holder_profile_id: string;
+  source: "order_paid" | "offer_accepted" | string;
+  source_id: string;
+  status: "active" | "burned" | "revoked" | string;
+  onchain_status?: "pending_mint" | "minted" | "pending_burn" | "burned" | string | null;
+  chain?: string | null;
+  certificate_mint?: string | null;
+  mint_signature?: string | null;
+  burn_signature?: string | null;
+  issued_at?: string;
+  burned_at?: string | null;
+  artworks?: Artwork | null;
 };
 
 export const DEFAULT_PROMO_BANNER: PromoBanner = {

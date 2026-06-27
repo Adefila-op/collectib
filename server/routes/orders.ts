@@ -3,6 +3,7 @@ import { z } from "zod";
 import { config, requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
 import { requireAuth } from "../middleware.js";
+import { issueProvenanceCertificate } from "../services/provenance.js";
 import { attachAffiliateToOrder, markAffiliateOrderPaid } from "./affiliates.js";
 import type { AuthedRequest } from "../types.js";
 
@@ -289,6 +290,12 @@ router.post("/flutterwave/verify", requireAuth, async (req: AuthedRequest, res, 
         .update({ status: "sold", updated_at: new Date().toISOString() })
         .eq("id", checkoutOrder.artwork_id);
       await markAffiliateOrderPaid(checkoutOrder.id);
+      await issueProvenanceCertificate({
+        artworkId: checkoutOrder.artwork_id,
+        holderProfileId: profileId,
+        source: "order_paid",
+        sourceId: checkoutOrder.id,
+      });
     }
 
     return res.json({ verified: paymentMatches, order: updated, providerResponse: payment });

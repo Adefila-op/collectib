@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireEnv } from "../config.js";
 import { getSupabase } from "../db.js";
 import { recalculateArtworkMarketValue } from "../services/market-value.js";
+import { issueProvenanceCertificate } from "../services/provenance.js";
 import { markAffiliateOrderPaid } from "./affiliates.js";
 
 const router = Router();
@@ -9,6 +10,7 @@ const router = Router();
 type PaymentOrderRow = {
   id: string;
   artwork_id: string;
+  buyer_profile_id: string;
   amount: number | string;
   currency: string;
 };
@@ -82,7 +84,7 @@ router.post("/flutterwave", async (req, res, next) => {
     if (reference) {
       const { data: order } = await supabase
         .from("orders")
-        .select("id, artwork_id, amount, currency")
+        .select("id, artwork_id, buyer_profile_id, amount, currency")
         .eq("payment_reference", reference)
         .maybeSingle();
       const paymentOrder = order as PaymentOrderRow | null;
@@ -109,6 +111,12 @@ router.post("/flutterwave", async (req, res, next) => {
           .update({ status: "sold", updated_at: new Date().toISOString() })
           .eq("id", paymentOrder.artwork_id);
         await markAffiliateOrderPaid(paymentOrder.id);
+        await issueProvenanceCertificate({
+          artworkId: paymentOrder.artwork_id,
+          holderProfileId: paymentOrder.buyer_profile_id,
+          source: "order_paid",
+          sourceId: paymentOrder.id,
+        });
       }
 
       if (!paymentOrder) {
