@@ -10,6 +10,8 @@ type ProfileRow = {
   wallet_address: string;
   display_name?: string | null;
   avatar_url?: string | null;
+  gender?: string | null;
+  dashboard_type?: string | null;
   created_at?: string | null;
 };
 
@@ -154,7 +156,7 @@ router.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     const [profile, emailAccount, artist, saved, offers, orders] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, wallet_address, display_name, avatar_url, created_at")
+        .select("id, wallet_address, display_name, avatar_url, gender, dashboard_type, created_at")
         .eq("id", profileId)
         .single(),
       supabase.from("email_accounts").select("email").eq("profile_id", profileId).maybeSingle(),
@@ -198,7 +200,105 @@ router.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
   }
 });
 
+router.patch("/dashboard-type", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const profileId = req.user?.sub;
+    if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });
+
+    const { dashboardType } = req.body;
+    if (dashboardType !== "collector" && dashboardType !== "artist") {
+      return res.status(400).json({ error: "Invalid dashboard type." });
+    }
+
+    const supabase = getSupabase();
+    
+    // Update the profile
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ dashboard_type: dashboardType })
+      .eq("id", profileId);
+
+    if (updateError) throw updateError;
+
+    // Fetch the updated profile to return
+    const { data: profile, error: fetchError } = await supabase
+      .from("profiles")
+      .select("id, wallet_address, display_name, avatar_url, gender, dashboard_type, created_at")
+      .eq("id", profileId)
+      .single();
+
+    if (fetchError || !profile) {
+      throw fetchError || new Error("Failed to fetch updated profile");
+    }
+
+    // Attach email
+    let email = null;
+    if (profile.dashboard_type === "artist") {
+      const { data: emailAccount } = await supabase
+        .from("email_accounts")
+        .select("email")
+        .eq("profile_id", profileId)
+        .single();
+      if (emailAccount) {
+        email = (emailAccount as EmailAccountRow).email;
+      }
+    }
+
+    // Attach artist_id if artist
+    let artistId = null;
+    if (profile.dashboard_type === "artist") {
+      const { data: artist } = await supabase
+        .from("artists")
+        .select("id")
+        .eq("profile_id", profileId)
+        .single();
+      if (artist) {
+        artistId = (artist as ArtistRow).id;
+      }
+    }
+
+    return res.json({
+      profile: {
+        ...profile,
+        email,
+        artist_id: artistId,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/onboarding-prefs", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const profileId = req.user?.sub;
+    if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });
+
+    const { artStyles, budgetRange, investmentGoal, artMedium, pricingRange } = req.body;
+
+    const updates: Record<string, unknown> = { onboarding_done: true };
+    if (Array.isArray(artStyles)) updates.art_styles = artStyles;
+    if (typeof budgetRange === "string") updates.budget_range = budgetRange;
+    if (typeof investmentGoal === "string") updates.investment_goal = investmentGoal;
+    if (Array.isArray(artMedium)) updates.art_medium = artMedium;
+    if (typeof pricingRange === "string") updates.pricing_range = pricingRange;
+
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", profileId);
+
+    if (error) throw error;
+
+    return res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/activity", requireAuth, async (req: AuthedRequest, res, next) => {
+
   try {
     const profileId = req.user?.sub;
     if (!profileId) return res.status(401).json({ error: "Missing authenticated user." });

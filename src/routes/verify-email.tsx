@@ -78,7 +78,7 @@ function Verify() {
             {isResending ? "Sending..." : "Resend verification email"}
           </button>
         )}
-        <PrimaryButton onClick={() => navigate({ to: isVerified ? "/home" : "/auth" })}>
+        <PrimaryButton onClick={() => navigate({ to: isVerified ? "/onboarding/role" : "/auth" })}>
           {isVerified ? "Continue" : "Back to sign in"}
         </PrimaryButton>
       </div>

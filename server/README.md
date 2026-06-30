@@ -31,6 +31,8 @@ The API listens on `http://localhost:8787`.
 
 Run `supabase.schema.sql` in the Supabase SQL editor. Use the service role key only in backend environment variables.
 
+Email signup, verification links, resend verification, and password resets are handled by Supabase Auth. The app does not run its own SMTP/token email service.
+
 ## Wallet Login Flow
 
 1. Frontend sends `{ walletAddress }` to `/api/auth/nonce`.

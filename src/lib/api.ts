@@ -14,6 +14,8 @@ export type AuthProfile = {
   wallet_address: string;
   display_name?: string | null;
   avatar_url?: string | null;
+  gender?: "female" | "male" | "non_binary" | "prefer_not_to_say" | null;
+  dashboard_type?: "collector" | "artist" | null;
 };
 
 type NonceResponse = {
@@ -354,7 +356,13 @@ export function verifyWalletSignature(walletAddress: string, signature: number[]
   });
 }
 
-export function signUpWithEmail(payload: { fullName: string; email: string; password: string }) {
+export function signUpWithEmail(payload: {
+  fullName: string;
+  email: string;
+  password: string;
+  gender?: "female" | "male" | "non_binary" | "prefer_not_to_say";
+  dashboardType: "collector" | "artist";
+}) {
   return request<SignupResponse>("/api/auth/signup", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -423,6 +431,55 @@ export function getHealth() {
 
 export function getMe() {
   return request<{ profile: MeProfile }>("/api/me");
+}
+
+export function updateDashboardType(dashboardType: "collector" | "artist") {
+  return request<{ profile: MeProfile }>("/api/me/dashboard-type", {
+    method: "PATCH",
+    body: JSON.stringify({ dashboardType }),
+  });
+}
+
+// ── Onboarding draft helpers ────────────────────────────────────────────────
+const ONBOARDING_DRAFT_KEY = "collectibles.onboardingDraft";
+
+export type OnboardingDraft = {
+  role?: "collector" | "artist";
+  artStyles?: string[];
+  budgetRange?: string;
+  investmentGoal?: string;
+  artMedium?: string[];
+  pricingRange?: string;
+};
+
+export function getOnboardingDraft(): OnboardingDraft {
+  try {
+    return JSON.parse(localStorage.getItem(ONBOARDING_DRAFT_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function patchOnboardingDraft(patch: Partial<OnboardingDraft>) {
+  const current = getOnboardingDraft();
+  localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify({ ...current, ...patch }));
+}
+
+export function clearOnboardingDraft() {
+  localStorage.removeItem(ONBOARDING_DRAFT_KEY);
+}
+
+export function saveOnboardingPrefs(prefs: {
+  artStyles?: string[];
+  budgetRange?: string;
+  investmentGoal?: string;
+  artMedium?: string[];
+  pricingRange?: string;
+}) {
+  return request<{ ok: boolean }>("/api/me/onboarding-prefs", {
+    method: "PATCH",
+    body: JSON.stringify(prefs),
+  });
 }
 
 export function getActivity() {
@@ -601,5 +658,22 @@ export function updateAdminPromoBanner(payload: PromoBanner) {
   return request<{ banner: PromoBanner }>("/api/admin/promo-banner", {
     method: "PATCH",
     body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminTableData<T>(table: string) {
+  return request<{ data: T[] }>(`/api/admin/data/${table}`);
+}
+
+export function patchAdminTableData<T>(table: string, id: string, payload: Partial<T>) {
+  return request<{ data: T }>(`/api/admin/data/${table}/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteAdminTableData(table: string, id: string) {
+  return request<{ success: boolean }>(`/api/admin/data/${table}/${id}`, {
+    method: "DELETE",
   });
 }

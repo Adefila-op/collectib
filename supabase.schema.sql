@@ -637,3 +637,49 @@ end $$;
 create unique index if not exists orders_one_active_artwork_idx
   on orders(artwork_id)
   where status in ('pending', 'payment_review', 'crypto_submitted', 'paid');
+
+do $ $
+begin
+  alter table artists
+    add column status text not null default 'pending';
+exception
+  when duplicate_column then null;
+end $ $;
+
+do $ $
+begin
+  alter table artists
+    add constraint artists_status_check
+    check (status in ('pending', 'approved', 'suspended'));
+exception
+  when duplicate_object then null;
+end $ $;
+
+do $ $
+begin
+  alter table artists
+    add column is_verified boolean not null default false;
+exception
+  when duplicate_column then null;
+end $ $;
+
+create index if not exists artists_status_idx on artists(status);
+
+do $ $
+begin
+  alter table artworks
+    add column is_verified boolean not null default false;
+exception
+  when duplicate_column then null;
+end $ $;
+do $ $
+begin
+  alter table profiles
+    add column art_balance numeric(18, 6) not null default 0,
+    add column fiat_balance numeric(18, 6) not null default 0,
+    add column is_paused boolean not null default false,
+    add column timeout_until timestamptz;
+exception
+  when duplicate_column then null;
+end $ $;
+

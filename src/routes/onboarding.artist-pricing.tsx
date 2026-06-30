@@ -2,25 +2,24 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import { getOnboardingDraft, patchOnboardingDraft } from "@/lib/api";
-import { Zap, TreePine, PieChart, Star, Heart } from "lucide-react";
+import { Sprout, TrendingUp, Landmark, Gem } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export const Route = createFileRoute("/onboarding/goals")({
-  component: Goals,
+export const Route = createFileRoute("/onboarding/artist-pricing")({
+  component: ArtistPricing,
 });
 
-const GOALS: { label: string; Icon: LucideIcon; desc: string }[] = [
-  { label: "Short-term gains",        Icon: Zap,      desc: "Flip and profit within 1–2 years" },
-  { label: "Long-term growth",         Icon: TreePine, desc: "Hold and appreciate over decades" },
-  { label: "Diversify portfolio",      Icon: PieChart, desc: "Spread risk across asset classes" },
-  { label: "Support emerging artists", Icon: Star,     desc: "Fund the next generation of talent" },
-  { label: "Pure passion",             Icon: Heart,    desc: "Collect what moves me" },
+const RANGES: { label: string; Icon: LucideIcon; desc: string }[] = [
+  { label: "Under $500",        Icon: Sprout,    desc: "Accessible & emerging" },
+  { label: "$500 – $2,000",     Icon: TrendingUp, desc: "Established emerging artist" },
+  { label: "$2,000 – $10,000",  Icon: Landmark,  desc: "Mid-career artist" },
+  { label: "$10,000+",          Icon: Gem,       desc: "Gallery-represented" },
 ];
 
-function Goals() {
+function ArtistPricing() {
   const navigate = useNavigate();
   const draft = getOnboardingDraft();
-  const [sel, setSel] = useState(draft.investmentGoal ?? "Long-term growth");
+  const [sel, setSel] = useState(draft.pricingRange ?? "$500 – $2,000");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -29,7 +28,7 @@ function Goals() {
   }, []);
 
   const handleFinish = () => {
-    patchOnboardingDraft({ investmentGoal: sel });
+    patchOnboardingDraft({ pricingRange: sel });
     navigate({ to: "/onboarding/setup" });
   };
 
@@ -45,20 +44,20 @@ function Goals() {
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 mb-5">
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              Step 3 of 3
+              Step 3 of 3 · Artist
             </span>
           </div>
           <h1 className="text-3xl font-extrabold leading-tight">
-            What are your<br />
-            <span className="text-primary">investment goals?</span>
+            What's your<br />
+            <span className="text-primary">typical price range?</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
-            Choose what matters most to you. This shapes your home feed.
+            This helps us match you with the right collectors on the platform.
           </p>
         </div>
 
         <div className="flex flex-col gap-3 mt-8">
-          {GOALS.map(({ label, Icon, desc }, i) => {
+          {RANGES.map(({ label, Icon, desc }, i) => {
             const active = sel === label;
             return (
               <button
@@ -102,7 +101,7 @@ function Goals() {
       </div>
 
       <div className="p-5 border-t border-border bg-background transition-all duration-500"
-        style={{ opacity: visible ? 1 : 0, transitionDelay: "500ms" }}>
+        style={{ opacity: visible ? 1 : 0, transitionDelay: "450ms" }}>
         <button
           type="button"
           onClick={handleFinish}

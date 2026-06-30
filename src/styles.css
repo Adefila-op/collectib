@@ -78,3 +78,12 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@utility slim-scrollbar {
+  &::-webkit-scrollbar { width: 4px; height: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: oklch(0.62 0.19 295 / 0.35); border-radius: 999px; }
+  &::-webkit-scrollbar-thumb:hover { background: oklch(0.62 0.19 295 / 0.6); }
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.62 0.19 295 / 0.35) transparent;
+}

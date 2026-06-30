@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User, Users } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { StatusBar, TopBar } from "@/components/mobile-shell";
 import {
@@ -22,6 +22,9 @@ function Auth() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [gender, setGender] = useState<"female" | "male" | "non_binary" | "prefer_not_to_say">(
+    "prefer_not_to_say",
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +61,7 @@ function Auth() {
     try {
       const result = isLogin
         ? await loginWithEmail({ email, password })
-        : await signUpWithEmail({ fullName, email, password });
+        : await signUpWithEmail({ fullName, email, password, gender, dashboardType: "collector" });
 
       if (!result) {
         throw new Error("Authentication returned an empty response. Please try again.");
@@ -70,7 +73,11 @@ function Auth() {
       }
 
       saveSession(result.token, result.profile.wallet_address);
-      navigate({ to: isLogin ? "/home" : "/onboarding/wallet" });
+      if (isLogin && localStorage.getItem("onboarding_completed") === "true") {
+        navigate({ to: "/home" });
+      } else {
+        navigate({ to: "/onboarding/role" });
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Authentication failed.");
     } finally {
@@ -92,15 +99,29 @@ function Auth() {
         <form className="mt-8" onSubmit={handleSubmit}>
           <div className="space-y-3">
             {!isLogin && (
-              <Field
-                label="Full name"
-                placeholder="Your name"
-                value={fullName}
-                onChange={setFullName}
-                icon={<User size={16} />}
-                autoComplete="name"
-                required
-              />
+              <>
+                <Field
+                  label="Full name"
+                  placeholder="Your name"
+                  value={fullName}
+                  onChange={setFullName}
+                  icon={<User size={16} />}
+                  autoComplete="name"
+                  required
+                />
+                <SelectField
+                  label="Gender"
+                  value={gender}
+                  onChange={(value) => setGender(value as typeof gender)}
+                  icon={<Users size={16} />}
+                  options={[
+                    { value: "prefer_not_to_say", label: "Prefer not to say" },
+                    { value: "female", label: "Female" },
+                    { value: "male", label: "Male" },
+                    { value: "non_binary", label: "Non-binary" },
+                  ]}
+                />
+              </>
             )}
             <Field
               label="Email address"
@@ -213,6 +234,40 @@ function Field({
           className="w-full min-w-0 bg-transparent outline-none text-sm font-medium placeholder:text-foreground/60"
         />
         {action}
+      </div>
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  icon,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl bg-secondary px-4 py-3">
+      <label className="text-[11px] text-muted-foreground font-medium">{label}</label>
+      <div className="mt-1 flex items-center gap-2">
+        {icon && <span className="text-muted-foreground">{icon}</span>}
+        <select
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full min-w-0 bg-transparent outline-none text-sm font-medium"
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

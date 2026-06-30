@@ -66,8 +66,11 @@ import { Route as OnboardingWalletSuccessRouteImport } from './routes/onboarding
 import { Route as OnboardingWalletRouteImport } from './routes/onboarding.wallet'
 import { Route as OnboardingStylesRouteImport } from './routes/onboarding.styles'
 import { Route as OnboardingSetupRouteImport } from './routes/onboarding.setup'
+import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
 import { Route as OnboardingGoalsRouteImport } from './routes/onboarding.goals'
 import { Route as OnboardingBudgetRouteImport } from './routes/onboarding.budget'
+import { Route as OnboardingArtistPricingRouteImport } from './routes/onboarding.artist-pricing'
+import { Route as OnboardingArtistMediumRouteImport } from './routes/onboarding.artist-medium'
 import { Route as MakeOfferIdRouteImport } from './routes/make-offer.$id'
 import { Route as EventIdRouteImport } from './routes/event.$id'
 import { Route as CollectionIdRouteImport } from './routes/collection.$id'
@@ -362,6 +365,11 @@ const OnboardingSetupRoute = OnboardingSetupRouteImport.update({
   path: '/onboarding/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoleRoute = OnboardingRoleRouteImport.update({
+  id: '/onboarding/role',
+  path: '/onboarding/role',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingGoalsRoute = OnboardingGoalsRouteImport.update({
   id: '/onboarding/goals',
   path: '/onboarding/goals',
@@ -370,6 +378,16 @@ const OnboardingGoalsRoute = OnboardingGoalsRouteImport.update({
 const OnboardingBudgetRoute = OnboardingBudgetRouteImport.update({
   id: '/onboarding/budget',
   path: '/onboarding/budget',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingArtistPricingRoute = OnboardingArtistPricingRouteImport.update({
+  id: '/onboarding/artist-pricing',
+  path: '/onboarding/artist-pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingArtistMediumRoute = OnboardingArtistMediumRouteImport.update({
+  id: '/onboarding/artist-medium',
+  path: '/onboarding/artist-medium',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MakeOfferIdRoute = MakeOfferIdRouteImport.update({
@@ -466,8 +484,11 @@ export interface FileRoutesByFullPath {
   '/collection/$id': typeof CollectionIdRoute
   '/event/$id': typeof EventIdRoute
   '/make-offer/$id': typeof MakeOfferIdRoute
+  '/onboarding/artist-medium': typeof OnboardingArtistMediumRoute
+  '/onboarding/artist-pricing': typeof OnboardingArtistPricingRoute
   '/onboarding/budget': typeof OnboardingBudgetRoute
   '/onboarding/goals': typeof OnboardingGoalsRoute
+  '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/setup': typeof OnboardingSetupRoute
   '/onboarding/styles': typeof OnboardingStylesRoute
   '/onboarding/wallet': typeof OnboardingWalletRoute
@@ -535,8 +556,11 @@ export interface FileRoutesByTo {
   '/collection/$id': typeof CollectionIdRoute
   '/event/$id': typeof EventIdRoute
   '/make-offer/$id': typeof MakeOfferIdRoute
+  '/onboarding/artist-medium': typeof OnboardingArtistMediumRoute
+  '/onboarding/artist-pricing': typeof OnboardingArtistPricingRoute
   '/onboarding/budget': typeof OnboardingBudgetRoute
   '/onboarding/goals': typeof OnboardingGoalsRoute
+  '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/setup': typeof OnboardingSetupRoute
   '/onboarding/styles': typeof OnboardingStylesRoute
   '/onboarding/wallet': typeof OnboardingWalletRoute
@@ -605,8 +629,11 @@ export interface FileRoutesById {
   '/collection/$id': typeof CollectionIdRoute
   '/event/$id': typeof EventIdRoute
   '/make-offer/$id': typeof MakeOfferIdRoute
+  '/onboarding/artist-medium': typeof OnboardingArtistMediumRoute
+  '/onboarding/artist-pricing': typeof OnboardingArtistPricingRoute
   '/onboarding/budget': typeof OnboardingBudgetRoute
   '/onboarding/goals': typeof OnboardingGoalsRoute
+  '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/setup': typeof OnboardingSetupRoute
   '/onboarding/styles': typeof OnboardingStylesRoute
   '/onboarding/wallet': typeof OnboardingWalletRoute
@@ -676,8 +703,11 @@ export interface FileRouteTypes {
     | '/collection/$id'
     | '/event/$id'
     | '/make-offer/$id'
+    | '/onboarding/artist-medium'
+    | '/onboarding/artist-pricing'
     | '/onboarding/budget'
     | '/onboarding/goals'
+    | '/onboarding/role'
     | '/onboarding/setup'
     | '/onboarding/styles'
     | '/onboarding/wallet'
@@ -745,8 +775,11 @@ export interface FileRouteTypes {
     | '/collection/$id'
     | '/event/$id'
     | '/make-offer/$id'
+    | '/onboarding/artist-medium'
+    | '/onboarding/artist-pricing'
     | '/onboarding/budget'
     | '/onboarding/goals'
+    | '/onboarding/role'
     | '/onboarding/setup'
     | '/onboarding/styles'
     | '/onboarding/wallet'
@@ -814,8 +847,11 @@ export interface FileRouteTypes {
     | '/collection/$id'
     | '/event/$id'
     | '/make-offer/$id'
+    | '/onboarding/artist-medium'
+    | '/onboarding/artist-pricing'
     | '/onboarding/budget'
     | '/onboarding/goals'
+    | '/onboarding/role'
     | '/onboarding/setup'
     | '/onboarding/styles'
     | '/onboarding/wallet'
@@ -883,8 +919,11 @@ export interface RootRouteChildren {
   CollectionIdRoute: typeof CollectionIdRoute
   EventIdRoute: typeof EventIdRoute
   MakeOfferIdRoute: typeof MakeOfferIdRoute
+  OnboardingArtistMediumRoute: typeof OnboardingArtistMediumRoute
+  OnboardingArtistPricingRoute: typeof OnboardingArtistPricingRoute
   OnboardingBudgetRoute: typeof OnboardingBudgetRoute
   OnboardingGoalsRoute: typeof OnboardingGoalsRoute
+  OnboardingRoleRoute: typeof OnboardingRoleRoute
   OnboardingSetupRoute: typeof OnboardingSetupRoute
   OnboardingStylesRoute: typeof OnboardingStylesRoute
   OnboardingWalletRoute: typeof OnboardingWalletRoute
@@ -1293,6 +1332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/role': {
+      id: '/onboarding/role'
+      path: '/onboarding/role'
+      fullPath: '/onboarding/role'
+      preLoaderRoute: typeof OnboardingRoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/goals': {
       id: '/onboarding/goals'
       path: '/onboarding/goals'
@@ -1305,6 +1351,20 @@ declare module '@tanstack/react-router' {
       path: '/onboarding/budget'
       fullPath: '/onboarding/budget'
       preLoaderRoute: typeof OnboardingBudgetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/artist-pricing': {
+      id: '/onboarding/artist-pricing'
+      path: '/onboarding/artist-pricing'
+      fullPath: '/onboarding/artist-pricing'
+      preLoaderRoute: typeof OnboardingArtistPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/artist-medium': {
+      id: '/onboarding/artist-medium'
+      path: '/onboarding/artist-medium'
+      fullPath: '/onboarding/artist-medium'
+      preLoaderRoute: typeof OnboardingArtistMediumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/make-offer/$id': {
@@ -1493,8 +1553,11 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionIdRoute: CollectionIdRoute,
   EventIdRoute: EventIdRoute,
   MakeOfferIdRoute: MakeOfferIdRoute,
+  OnboardingArtistMediumRoute: OnboardingArtistMediumRoute,
+  OnboardingArtistPricingRoute: OnboardingArtistPricingRoute,
   OnboardingBudgetRoute: OnboardingBudgetRoute,
   OnboardingGoalsRoute: OnboardingGoalsRoute,
+  OnboardingRoleRoute: OnboardingRoleRoute,
   OnboardingSetupRoute: OnboardingSetupRoute,
   OnboardingStylesRoute: OnboardingStylesRoute,
   OnboardingWalletRoute: OnboardingWalletRoute,

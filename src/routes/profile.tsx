@@ -86,6 +86,7 @@ function Profile() {
     {
       label: "Account",
       items: [
+        ...(profile?.email === "admin@admin.com" ? [{ label: "Admin Panel", Icon: ShieldCheck, to: "/admin" } satisfies ProfileItem] : []),
         { label: "Settings", Icon: Settings, to: "/settings" },
         { label: "Invite Friends", Icon: Bell, to: "/invite" },
         { label: "Help & Support", Icon: HelpCircle, to: "/help" },

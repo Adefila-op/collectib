@@ -29,6 +29,8 @@ const emailAuthSchema = z.object({
 
 const emailSignupSchema = emailAuthSchema.extend({
   fullName: z.string().trim().min(2).max(80),
+  gender: z.enum(["female", "male", "non_binary", "prefer_not_to_say"]).optional(),
+  dashboardType: z.enum(["collector", "artist"]).default("collector"),
 });
 
 const recognitionSchema = z.object({
@@ -66,6 +68,8 @@ type ProfileRow = {
   wallet_address: string;
   display_name?: string | null;
   avatar_url?: string | null;
+  gender?: string | null;
+  dashboard_type?: string | null;
 };
 
 type EmailAccountRow = {
@@ -196,12 +200,17 @@ function authRedirect(path: string) {
   return `${config.publicAppUrl.replace(/\/$/, "")}${path}`;
 }
 
-async function syncEmailProfile(email: string, fullName?: string | null, verifiedAt?: string | null) {
+async function syncEmailProfile(
+  email: string,
+  fullName?: string | null,
+  verifiedAt?: string | null,
+  profileOptions: { gender?: string | null; dashboardType?: "collector" | "artist" } = {},
+) {
   const supabase = getSupabase();
   const walletAddress = `email:${email}`;
   const { data: existingProfile, error: existingProfileError } = await supabase
     .from("profiles")
-    .select("id, wallet_address, display_name, avatar_url")
+    .select("id, wallet_address, display_name, avatar_url, gender, dashboard_type")
     .eq("wallet_address", walletAddress)
     .maybeSingle();
 
@@ -215,18 +224,29 @@ async function syncEmailProfile(email: string, fullName?: string | null, verifie
       .insert({
         wallet_address: walletAddress,
         display_name: fullName || email.split("@")[0],
+        gender: profileOptions.gender ?? null,
+        dashboard_type: profileOptions.dashboardType ?? "collector",
       })
-      .select("id, wallet_address, display_name, avatar_url")
+      .select("id, wallet_address, display_name, avatar_url, gender, dashboard_type")
       .single();
 
     if (error) throw error;
     profile = data as ProfileRow;
-  } else if (fullName && !profile.display_name) {
+  } else if (
+    (fullName && !profile.display_name) ||
+    (profileOptions.gender && !profile.gender) ||
+    (profileOptions.dashboardType && profile.dashboard_type !== profileOptions.dashboardType)
+  ) {
     const { data, error } = await supabase
       .from("profiles")
-      .update({ display_name: fullName, updated_at: new Date().toISOString() })
+      .update({
+        ...(fullName && !profile.display_name ? { display_name: fullName } : {}),
+        ...(profileOptions.gender && !profile.gender ? { gender: profileOptions.gender } : {}),
+        ...(profileOptions.dashboardType ? { dashboard_type: profileOptions.dashboardType } : {}),
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", profile.id)
-      .select("id, wallet_address, display_name, avatar_url")
+      .select("id, wallet_address, display_name, avatar_url, gender, dashboard_type")
       .single();
 
     if (error) throw error;
@@ -252,14 +272,14 @@ async function syncEmailProfile(email: string, fullName?: string | null, verifie
 
 router.post("/signup", async (req, res, next) => {
   try {
-    const { email, password, fullName } = emailSignupSchema.parse(req.body);
+    const { email, password, fullName, gender, dashboardType } = emailSignupSchema.parse(req.body);
     const auth = createSupabaseAuthClient();
 
     const { data, error } = await auth.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, gender: gender ?? null, dashboard_type: dashboardType },
         emailRedirectTo: authRedirect(`/verify-email?email=${encodeURIComponent(email)}`),
       },
     });
@@ -270,7 +290,10 @@ router.post("/signup", async (req, res, next) => {
       return res.status(status).json({ error: message });
     }
 
-    const userProfile = await syncEmailProfile(email, fullName, data.user?.email_confirmed_at ?? null);
+    const userProfile = await syncEmailProfile(email, fullName, data.user?.email_confirmed_at ?? null, {
+      gender: gender ?? null,
+      dashboardType,
+    });
     if (data.session) {
       const token = signProfileToken(userProfile, { email });
       await recordAuthRecognition(req, userProfile.id);
